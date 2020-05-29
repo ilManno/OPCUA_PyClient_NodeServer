@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainwindow_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.0
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -45,10 +45,12 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.splitter, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 922, 22))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 922, 21))
         self.menuBar.setObjectName("menuBar")
         self.menuOPC_UA_Client = QtWidgets.QMenu(self.menuBar)
         self.menuOPC_UA_Client.setObjectName("menuOPC_UA_Client")
+        self.menuView = QtWidgets.QMenu(self.menuBar)
+        self.menuView.setObjectName("menuView")
         MainWindow.setMenuBar(self.menuBar)
         self.statusBar = QtWidgets.QStatusBar(MainWindow)
         self.statusBar.setObjectName("statusBar")
@@ -205,19 +207,19 @@ class Ui_MainWindow(object):
         self.gridLayout_5.addWidget(self.evView, 0, 0, 1, 1)
         self.evDockWidget.setWidget(self.dockWidgetContents_5)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.evDockWidget)
-        self.logDockWidget_2 = QtWidgets.QDockWidget(MainWindow)
-        self.logDockWidget_2.setObjectName("logDockWidget_2")
-        self.dockWidgetContents_7 = QtWidgets.QWidget()
-        self.dockWidgetContents_7.setObjectName("dockWidgetContents_7")
-        self.gridLayout_6 = QtWidgets.QGridLayout(self.dockWidgetContents_7)
+        self.logDockWidget = QtWidgets.QDockWidget(MainWindow)
+        self.logDockWidget.setObjectName("logDockWidget")
+        self.dockWidgetContents_6 = QtWidgets.QWidget()
+        self.dockWidgetContents_6.setObjectName("dockWidgetContents_6")
+        self.gridLayout_6 = QtWidgets.QGridLayout(self.dockWidgetContents_6)
         self.gridLayout_6.setContentsMargins(11, 11, 11, 11)
         self.gridLayout_6.setSpacing(6)
         self.gridLayout_6.setObjectName("gridLayout_6")
-        self.logTextEdit = QtWidgets.QTextEdit(self.dockWidgetContents_7)
+        self.logTextEdit = QtWidgets.QTextEdit(self.dockWidgetContents_6)
         self.logTextEdit.setObjectName("logTextEdit")
         self.gridLayout_6.addWidget(self.logTextEdit, 0, 0, 1, 1)
-        self.logDockWidget_2.setWidget(self.dockWidgetContents_7)
-        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(8), self.logDockWidget_2)
+        self.logDockWidget.setWidget(self.dockWidgetContents_6)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(8), self.logDockWidget)
         self.actionConnect = QtWidgets.QAction(MainWindow)
         self.actionConnect.setObjectName("actionConnect")
         self.actionDisconnect = QtWidgets.QAction(MainWindow)
@@ -249,6 +251,7 @@ class Ui_MainWindow(object):
         self.menuOPC_UA_Client.addAction(self.actionSubscribeEvent)
         self.menuOPC_UA_Client.addAction(self.actionUnsubscribeEvents)
         self.menuBar.addAction(self.menuOPC_UA_Client.menuAction())
+        self.menuBar.addAction(self.menuView.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -257,6 +260,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "FreeOpcUa Client"))
         self.menuOPC_UA_Client.setTitle(_translate("MainWindow", "Act&ions"))
+        self.menuView.setTitle(_translate("MainWindow", "View"))
         self.attrDockWidget.setWindowTitle(_translate("MainWindow", "&Attributes"))
         self.attrRefreshButton.setText(_translate("MainWindow", "Refresh"))
         self.connectButton.setText(_translate("MainWindow", "Connect"))
@@ -265,6 +269,7 @@ class Ui_MainWindow(object):
         self.subDockWidget.setWindowTitle(_translate("MainWindow", "S&ubscriptions"))
         self.refDockWidget.setWindowTitle(_translate("MainWindow", "&References"))
         self.evDockWidget.setWindowTitle(_translate("MainWindow", "&Events"))
+        self.logDockWidget.setWindowTitle(_translate("MainWindow", "Logs"))
         self.actionConnect.setText(_translate("MainWindow", "&Connect"))
         self.actionDisconnect.setText(_translate("MainWindow", "&Disconnect"))
         self.actionDisconnect.setToolTip(_translate("MainWindow", "Disconnect from server"))

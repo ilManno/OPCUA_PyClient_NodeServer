@@ -217,13 +217,19 @@ class Window(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowIcon(QIcon(":/network.svg"))
 
-        # fix stuff imposible to do in qtdesigner
+        # fix stuff impossible to do in qtdesigner
         # remove dock titlebar for addressbar
         w = QWidget()
         self.ui.addrDockWidget.setTitleBarWidget(w)
         # tabify some docks
         self.tabifyDockWidget(self.ui.evDockWidget, self.ui.subDockWidget)
         self.tabifyDockWidget(self.ui.subDockWidget, self.ui.refDockWidget)
+        # add view actions in menu bar
+        self.ui.menuView.addAction(self.ui.attrDockWidget.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.subDockWidget.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.refDockWidget.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.evDockWidget.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.logDockWidget.toggleViewAction())
 
         # we only show statusbar in case of errors
         self.ui.statusBar.hide()
