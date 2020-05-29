@@ -18,7 +18,7 @@ from uaclient import UaClient
 from mainwindow_ui import Ui_MainWindow
 from connection_dialog import ConnectionDialog
 
-from uawidgets import resources
+
 from uawidgets.attrs_widget import AttrsWidget
 from uawidgets.tree_widget import TreeWidget
 from uawidgets.refs_widget import RefsWidget
@@ -215,7 +215,7 @@ class Window(QMainWindow):
         QMainWindow.__init__(self)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setWindowIcon(QIcon(":/network.svg"))
+        self.setWindowIcon(QIcon("uawidgets/resources/network.svg"))
 
         # fix stuff impossible to do in qtdesigner
         # remove dock titlebar for addressbar
