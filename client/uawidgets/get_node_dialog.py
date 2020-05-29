@@ -1,8 +1,7 @@
-from PyQt5.QtCore import pyqtSignal, QSettings
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QTreeView, QDialog, QHBoxLayout, QVBoxLayout, QDialogButtonBox, QAbstractItemView, QPushButton, QLineEdit, QWidget
-from PyQt5.QtCore import Qt
 
-from opcua import Node, ua
+from opcua import ua, Node
 
 from uawidgets.tree_widget import TreeWidget
 
@@ -13,8 +12,7 @@ class GetNodeTextButton(QWidget):
     """
 
     def __init__(self, parent, currentnode, startnode):
-        QWidget.__init__(self, parent)
-        #QWidget.__init__(self)
+        super().__init__(parent)
         if currentnode.nodeid.is_null():
             text = "Null"
         else:
@@ -64,7 +62,7 @@ class GetNodeButton(QPushButton):
             text = currentnode.get_browse_name().to_string()
         except ua.UaError:
             pass
-        QPushButton.__init__(self, text, parent)
+        super().__init__(text, parent)
         self._current_node = currentnode
         self.start_node = startnode
         self.clicked.connect(self.get_new_node)
@@ -83,7 +81,7 @@ class GetNodeButton(QPushButton):
 
 class GetNodeDialog(QDialog):
     def __init__(self, parent, startnode, currentnode=None):
-        QDialog.__init__(self, parent)
+        super().__init__(parent)
 
         layout = QVBoxLayout(self)
         
@@ -133,12 +131,10 @@ class GetDataTypeNodeButton(GetNodeButton):
             current_type = server.get_node(ua.ObjectIds.Float)
         else:
             current_type = server.get_node(dtype)
-        GetNodeButton.__init__(self, parent, current_type, base_data_type)
+        super().__init__(parent, current_type, base_data_type)
 
     def get_new_node(self):
         node, ok = GetNodeButton.get_new_node(self)
         if ok:
             self.settings.setValue("last_datatype", node.nodeid.to_string())
         return node, ok
-
-

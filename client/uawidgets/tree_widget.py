@@ -2,8 +2,7 @@ from PyQt5.QtCore import pyqtSignal, QMimeData, QObject, Qt, QSettings
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QApplication, QAbstractItemView, QAction
 
-from opcua import ua
-from opcua import Node
+from opcua import ua, Node
 from opcua.ua import UaError
 
 
@@ -12,7 +11,7 @@ class TreeWidget(QObject):
     error = pyqtSignal(Exception)
 
     def __init__(self, view):
-        QObject.__init__(self, view)
+        super().__init__(view)
         self.view = view
         self.model = TreeViewModel()
         self.model.clear()  # FIXME: do we need this?
@@ -155,7 +154,7 @@ class TreeViewModel(QStandardItemModel):
     error = pyqtSignal(Exception)
 
     def __init__(self):
-        super(TreeViewModel, self).__init__()
+        super().__init__()
         self._fetched = []
 
     def clear(self):
@@ -178,7 +177,7 @@ class TreeViewModel(QStandardItemModel):
         return desc
 
     def add_item(self, desc, parent=None, node=None):
-        dname = bname = nodeid = "No Value"
+        dname = bname = "No Value"
         if desc.DisplayName:
             dname = desc.DisplayName.to_string()
         if desc.BrowseName:
@@ -268,5 +267,3 @@ class TreeViewModel(QStandardItemModel):
                     nodes.append(node.nodeid.to_string())
         mdata.setText(", ".join(nodes))
         return mdata
-
-

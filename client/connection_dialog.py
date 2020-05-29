@@ -6,7 +6,7 @@ from uawidgets.utils import trycatchslot
 
 class ConnectionDialog(QDialog):
     def __init__(self, parent, uri):
-        QDialog.__init__(self)
+        super().__init__()
         self.ui = Ui_ConnectionDialog()
         self.ui.setupUi(self)
 
@@ -91,5 +91,3 @@ class ConnectionDialog(QDialog):
         path, ok = QFileDialog.getOpenFileName(self, "Select private key", self.private_key_path, "Private key (*.pem)")
         if ok:
             self.ui.privateKeyLabel.setText(path)
-
-

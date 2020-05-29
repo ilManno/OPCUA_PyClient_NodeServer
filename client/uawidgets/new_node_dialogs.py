@@ -3,16 +3,15 @@ import uuid
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox, QFrame
 
-from opcua import ua, Node
-from opcua.common.ua_utils import string_to_variant
-from opcua.common.ua_utils import data_type_to_variant_type
+from opcua import ua
+from opcua.common.ua_utils import data_type_to_variant_type, string_to_variant
 
 from uawidgets.get_node_dialog import GetNodeButton, GetDataTypeNodeButton
 
 
 class NewNodeBaseDialog(QDialog):
     def __init__(self, parent, title, server):
-        QDialog.__init__(self, parent)
+        super().__init__(parent)
         self.setWindowTitle(title)
         self.settings = QSettings()
         self.server = server
@@ -100,7 +99,7 @@ class NewNodeBaseDialog(QDialog):
 
 class NewUaObjectDialog(NewNodeBaseDialog):
     def __init__(self, parent, title, server, base_node_type, current_node_type=None):
-        NewNodeBaseDialog.__init__(self, parent, title, server)
+        super().__init__(parent, title, server)
 
         if current_node_type is None:
             current_node_type = base_node_type
@@ -116,7 +115,7 @@ class NewUaObjectDialog(NewNodeBaseDialog):
 
 class NewUaVariableDialog(NewNodeBaseDialog):
     def __init__(self, parent, title, server, dtype=None):
-        NewNodeBaseDialog.__init__(self, parent, title, server)
+        super().__init__(parent, title, server)
 
         self.valLineEdit = QLineEdit(self)
         self.valLineEdit.setMinimumWidth(100)
@@ -179,7 +178,7 @@ class NewUaVariableDialog(NewNodeBaseDialog):
 
 class NewUaMethodDialog(NewNodeBaseDialog):
     def __init__(self, parent, title, server):
-        NewNodeBaseDialog.__init__(self, parent, title, server)
+        super().__init__(parent, title, server)
 
         self.widgets = []
 

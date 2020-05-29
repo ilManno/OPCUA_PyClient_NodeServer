@@ -1,30 +1,23 @@
-#! /usr/bin/env python3
-
-import sys
-
-from datetime import datetime
-import inspect
-from enum import Enum
 import logging
+import sys
+from datetime import datetime
 
-from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QItemSelection, QMimeData, QCoreApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QAbstractItemView, QMenu, QAction
+from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QItemSelection, QCoreApplication
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu
 
-from opcua import ua
-from opcua import Node
-
-from uaclient import UaClient
-from mainwindow_ui import Ui_MainWindow
-from connection_dialog import ConnectionDialog
-
+from opcua import ua, Node
 
 from uawidgets.attrs_widget import AttrsWidget
-from uawidgets.tree_widget import TreeWidget
-from uawidgets.refs_widget import RefsWidget
-from uawidgets.utils import trycatchslot
-from uawidgets.logger import QtHandler
 from uawidgets.call_method_dialog import CallMethodDialog
+from uawidgets.logger import QtHandler
+from uawidgets.refs_widget import RefsWidget
+from uawidgets.tree_widget import TreeWidget
+from uawidgets.utils import trycatchslot
+
+from connection_dialog import ConnectionDialog
+from mainwindow_ui import Ui_MainWindow
+from uaclient import UaClient
 
 
 logger = logging.getLogger(__name__)
@@ -212,10 +205,9 @@ class DataChangeUI(object):
 class Window(QMainWindow):
 
     def __init__(self):
-        QMainWindow.__init__(self)
+        super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setWindowIcon(QIcon("uawidgets/resources/network.svg"))
 
         # fix stuff impossible to do in qtdesigner
         # remove dock titlebar for addressbar

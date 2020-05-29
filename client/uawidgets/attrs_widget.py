@@ -4,8 +4,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QObject, QSettings
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMenu, QAction, QStyledItemDelegate, QComboBox, QVBoxLayout, QCheckBox, QDialog, QAbstractItemView
 
-from opcua import ua
-from opcua import Node
+from opcua import ua, Node
 from opcua.common.ua_utils import string_to_val, val_to_string, data_type_to_string
 
 from uawidgets.get_node_dialog import GetNodeButton
@@ -23,7 +22,7 @@ class BitEditor(QDialog):
     """
 
     def __init__(self, parent, attr, val):
-        QDialog.__init__(self, parent)
+        super().__init__(parent)
         layout = QVBoxLayout(self)
         self.setLayout(layout)
         self.boxes = []
@@ -81,7 +80,7 @@ class AttrsWidget(QObject):
     attr_written = pyqtSignal(ua.AttributeIds, ua.DataValue)
 
     def __init__(self, view, show_timestamps=True):
-        QObject.__init__(self, view)
+        super().__init__(view)
         self.view = view
         self._timestamps = show_timestamps
         delegate = MyDelegate(self.view, self)
@@ -260,7 +259,7 @@ class MyDelegate(QStyledItemDelegate):
     attr_written = pyqtSignal(ua.AttributeIds, ua.DataValue)
 
     def __init__(self, parent, attrs_widget):
-        QStyledItemDelegate.__init__(self, parent)
+        super().__init__(parent)
         self.attrs_widget = attrs_widget
 
     @trycatchslot

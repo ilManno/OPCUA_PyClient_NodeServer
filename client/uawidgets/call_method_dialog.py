@@ -1,14 +1,13 @@
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox, QFrame
+from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QHBoxLayout, QDialog, QVBoxLayout
 
-from opcua.common.ua_utils import val_to_string, string_to_variant, data_type_to_variant_type, data_type_to_string
-from opcua.common.methods import call_method_full
 from opcua import ua
+from opcua.common.methods import call_method_full
+from opcua.common.ua_utils import val_to_string, string_to_variant, data_type_to_variant_type, data_type_to_string
 
 
 class CallMethodDialog(QDialog):
     def __init__(self, parent, server, node):
-        QDialog.__init__(self, parent)
+        super().__init__(parent)
         self.setWindowTitle("UA Method Call")
         self.server = server
         self.node = node

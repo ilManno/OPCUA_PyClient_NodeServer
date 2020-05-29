@@ -1,5 +1,4 @@
 import logging
-from copy import copy
 
 from PyQt5.QtCore import pyqtSignal, QObject, QSettings, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -7,8 +6,8 @@ from PyQt5.QtWidgets import QMenu, QAction, QStyledItemDelegate, QAbstractItemVi
 
 from opcua import ua, Node
 
-from uawidgets.utils import trycatchslot
 from uawidgets.get_node_dialog import GetNodeTextButton
+from uawidgets.utils import trycatchslot
 
 
 logger = logging.getLogger(__name__)
@@ -20,8 +19,8 @@ class RefsWidget(QObject):
     reference_changed = pyqtSignal(Node)
 
     def __init__(self, view):
+        super().__init__(view)
         self.view = view
-        QObject.__init__(self, view)
         self.model = QStandardItemModel()
 
         delegate = MyDelegate(self.view, self)
@@ -160,7 +159,7 @@ class MyDelegate(QStyledItemDelegate):
     reference_changed = pyqtSignal(Node)
 
     def __init__(self, parent, widget):
-        QStyledItemDelegate.__init__(self, parent)
+        super().__init__(parent)
         self._widget = widget
 
     @trycatchslot
@@ -213,7 +212,3 @@ class MyDelegate(QStyledItemDelegate):
 
         self.reference_changed.emit(self._widget.node)
         self._widget.reload()
-
-
-
-

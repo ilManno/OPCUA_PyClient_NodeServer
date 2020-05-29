@@ -1,4 +1,3 @@
-
 import inspect
 import logging
 
@@ -29,5 +28,3 @@ def trycatchslot(func):
                 logger.warning("Error class % has no member show_error or error", self)
         return result
     return wrapper
-
-

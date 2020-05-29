@@ -2,17 +2,14 @@ import logging
 
 from PyQt5.QtCore import QSettings
 
-from opcua import ua
-from opcua import Client
-from opcua import Node
-from opcua import crypto
+from opcua import crypto, ua, Client, Node
 from opcua.tools import endpoint_to_strings
 
 
 logger = logging.getLogger(__name__)
 
 
-class UaClient(object):
+class UaClient:
     """
     OPC-Ua client specialized for the need of GUI client
     return exactly what GUI needs, no customization possible
@@ -136,4 +133,3 @@ class UaClient(object):
         descs = node.get_children_descriptions()
         descs.sort(key=lambda x: x.BrowseName)
         return descs
-

@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../network.svg</normaloff>../network.svg</iconset>
+    <normaloff>uawidgets/resources/network.svg</normaloff>uawidgets/resources/network.svg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
