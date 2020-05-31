@@ -63,25 +63,11 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuOPC_UA_Client">
-    <property name="title">
-     <string>Act&amp;ions</string>
-    </property>
-    <addaction name="actionConnect"/>
-    <addaction name="actionDisconnect"/>
-    <addaction name="actionCopyPath"/>
-    <addaction name="actionCopyNodeId"/>
-    <addaction name="actionSubscribeDataChange"/>
-    <addaction name="actionUnsubscribeDataChange"/>
-    <addaction name="actionSubscribeEvent"/>
-    <addaction name="actionUnsubscribeEvents"/>
-   </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
     </property>
    </widget>
-   <addaction name="menuOPC_UA_Client"/>
    <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -99,7 +85,7 @@
     </size>
    </property>
    <property name="windowTitle">
-    <string>&amp;Attributes</string>
+    <string>Attributes</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -194,19 +180,9 @@
     </property>
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="4">
-      <widget class="QPushButton" name="connectButton">
+      <widget class="QPushButton" name="optionsButton">
        <property name="text">
-        <string>Connect</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="5">
-      <widget class="QPushButton" name="disconnectButton">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Disconnect</string>
+        <string>Options</string>
        </property>
       </widget>
      </item>
@@ -227,9 +203,9 @@
       </widget>
      </item>
      <item row="1" column="3">
-      <widget class="QPushButton" name="connectOptionButton">
+      <widget class="QPushButton" name="connectButton">
        <property name="text">
-        <string>Connect options</string>
+        <string>Connect</string>
        </property>
       </widget>
      </item>
@@ -244,7 +220,7 @@
     </sizepolicy>
    </property>
    <property name="windowTitle">
-    <string>S&amp;ubscriptions</string>
+    <string>Subscriptions</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -287,7 +263,7 @@
     </sizepolicy>
    </property>
    <property name="windowTitle">
-    <string>&amp;References</string>
+    <string>References</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -318,7 +294,7 @@
     </sizepolicy>
    </property>
    <property name="windowTitle">
-    <string>&amp;Events</string>
+    <string>Events</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -356,22 +332,9 @@
     </layout>
    </widget>
   </widget>
-  <action name="actionConnect">
-   <property name="text">
-    <string>&amp;Connect</string>
-   </property>
-  </action>
-  <action name="actionDisconnect">
-   <property name="text">
-    <string>&amp;Disconnect</string>
-   </property>
-   <property name="toolTip">
-    <string>Disconnect from server</string>
-   </property>
-  </action>
   <action name="actionSubscribeDataChange">
    <property name="text">
-    <string>&amp;Subscribe to data change</string>
+    <string>Subscribe to data change</string>
    </property>
    <property name="toolTip">
     <string>Subscribe to data change from selected node</string>
@@ -379,7 +342,7 @@
   </action>
   <action name="actionUnsubscribeDataChange">
    <property name="text">
-    <string>&amp;Unsubscribe to DataChange</string>
+    <string>Unsubscribe to DataChange</string>
    </property>
    <property name="toolTip">
     <string>Unsubscribe to DataChange for current node</string>
@@ -387,7 +350,7 @@
   </action>
   <action name="actionSubscribeEvent">
    <property name="text">
-    <string>Subscribe to &amp;events</string>
+    <string>Subscribe to events</string>
    </property>
    <property name="toolTip">
     <string>Subscribe to events from selected node</string>
@@ -395,7 +358,7 @@
   </action>
   <action name="actionUnsubscribeEvents">
    <property name="text">
-    <string>U&amp;nsubscribe to Events</string>
+    <string>Unsubscribe to Events</string>
    </property>
    <property name="toolTip">
     <string>Unsubscribe to Events from current node</string>
@@ -403,7 +366,7 @@
   </action>
   <action name="actionCopyPath">
    <property name="text">
-    <string>Copy &amp;Path</string>
+    <string>Copy Path</string>
    </property>
    <property name="toolTip">
     <string>Copy path to node to clipboard</string>
@@ -411,32 +374,10 @@
   </action>
   <action name="actionCopyNodeId">
    <property name="text">
-    <string>C&amp;opy NodeId</string>
+    <string>Copy NodeId</string>
    </property>
    <property name="toolTip">
     <string>Copy NodeId to clipboard</string>
-   </property>
-  </action>
-  <action name="actionAddToGraph">
-   <property name="text">
-    <string>Add to &amp;Graph</string>
-   </property>
-   <property name="toolTip">
-    <string>Add this node to the graph</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+G</string>
-   </property>
-  </action>
-  <action name="actionRemoveFromGraph">
-   <property name="text">
-    <string>Remove from Graph</string>
-   </property>
-   <property name="toolTip">
-    <string>Remove this node from the graph</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+G</string>
    </property>
   </action>
   <action name="actionCall">

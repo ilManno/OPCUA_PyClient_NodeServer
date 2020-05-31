@@ -57,7 +57,6 @@ class EventUI(object):
         # context menu
         self.window.addAction(self.window.ui.actionSubscribeEvent)
         self.window.addAction(self.window.ui.actionUnsubscribeEvents)
-        self.window.addAction(self.window.ui.actionAddToGraph)
         self._handler.event_fired.connect(self._update_event_model, type=Qt.QueuedConnection)
 
         # accept drops
@@ -269,14 +268,10 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
-        self.ui.connectButton.clicked.connect(self.connect)
-        self.ui.disconnectButton.clicked.connect(self.disconnect)
+        self.ui.connectButton.clicked.connect(self.handle_connect)
         # self.ui.treeView.expanded.connect(self._fit)
 
-        self.ui.actionConnect.triggered.connect(self.connect)
-        self.ui.actionDisconnect.triggered.connect(self.disconnect)
-
-        self.ui.connectOptionButton.clicked.connect(self.show_connection_dialog)
+        self.ui.optionsButton.clicked.connect(self.show_connection_dialog)
 
     def _uri_changed(self, uri):
         self.uaclient.load_security_settings(uri)
@@ -340,17 +335,20 @@ class Window(QMainWindow):
         self.tree_ui.set_root_node(self.uaclient.client.get_root_node())
         self.ui.treeView.setFocus()
         self.load_current_node()
-        self.ui.connectButton.setText("Reconnect")
-        self.ui.disconnectButton.setEnabled(True)
+        self.ui.connectButton.setText("Disconnect")
+        self.ui.optionsButton.setEnabled(False)
+        self.ui.addrComboBox.setEnabled(False)
 
     def _update_address_list(self, uri):
-        if uri == self._address_list[0]:
-            return
         if uri in self._address_list:
             self._address_list.remove(uri)
         self._address_list.insert(0, uri)
         if len(self._address_list) > self._address_list_max_count:
             self._address_list.pop(-1)
+        # update combo box
+        self.ui.addrComboBox.clear()
+        for addr in self._address_list:
+            self.ui.addrComboBox.insertItem(100, addr)
 
     def disconnect(self):
         try:
@@ -359,14 +357,21 @@ class Window(QMainWindow):
             self.show_error(ex)
             raise
         finally:
-            self.ui.disconnectButton.setEnabled(False)
-            self.ui.connectButton.setText("Connect")
             self.save_current_node()
             self.tree_ui.clear()
             self.refs_ui.clear()
             self.attrs_ui.clear()
             self.datachange_ui.clear()
             self.event_ui.clear()
+            self.ui.connectButton.setText("Connect")
+            self.ui.optionsButton.setEnabled(True)
+            self.ui.addrComboBox.setEnabled(True)
+
+    def handle_connect(self):
+        if self.ui.connectButton.text() == "Connect":
+            self.connect()
+        else:
+            self.disconnect()
 
     def closeEvent(self, event):
         self.tree_ui.save_state()
