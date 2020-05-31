@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QItemSelection, QCoreApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu
 
 from opcua import ua, Node
@@ -226,17 +226,24 @@ class Window(QMainWindow):
         self.ui.statusBar.hide()
 
         # setup QSettings for application and get a settings object
+        QCoreApplication.setOrganizationName("UniCT")
         QCoreApplication.setApplicationName("OpcUaClient")
         self.settings = QSettings()
-
         self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4334/UA/NodeServer",
-                                                                  "opc.tcp://localhost:51210/UA/SampleServer"])
+                                                                  "Clear all..."])
         print("ADR", self._address_list)
         self._address_list_max_count = int(self.settings.value("address_list_max_count", 10))
 
         # init widgets
-        for addr in self._address_list:
-            self.ui.addrComboBox.insertItem(100, addr)
+        address_list_len = len(self._address_list)
+        for index in range(address_list_len):
+            self.ui.addrComboBox.insertItem(index, self._address_list[index])
+            icon = "uawidgets/resources/server.svg" if index < address_list_len - 1 else "uawidgets/resources/x.svg"
+            self.ui.addrComboBox.setItemIcon(index, QIcon(icon))
+
+        self.ui.addrComboBox.currentTextChanged.connect(self.clear_addresses)
+        self.ui.addrComboBox.lineEdit().returnPressed.connect(self.handle_connect)
+        self.ui.addrComboBox.setCompleter(None)
 
         self.uaclient = UaClient()
 
@@ -277,6 +284,7 @@ class Window(QMainWindow):
         self.uaclient.load_security_settings(uri)
 
     def show_connection_dialog(self):
+        # Query endpoints
         dia = ConnectionDialog(self, self.ui.addrComboBox.currentText())
         dia.security_mode = self.uaclient.security_mode
         dia.security_policy = self.uaclient.security_policy
@@ -347,8 +355,18 @@ class Window(QMainWindow):
             self._address_list.pop(-1)
         # update combo box
         self.ui.addrComboBox.clear()
-        for addr in self._address_list:
-            self.ui.addrComboBox.insertItem(100, addr)
+        address_list_len = len(self._address_list)
+        for index in range(address_list_len):
+            self.ui.addrComboBox.insertItem(index, self._address_list[index])
+            icon = "uawidgets/resources/server.svg" if index < address_list_len - 1 else "uawidgets/resources/x.svg"
+            self.ui.addrComboBox.setItemIcon(index, QIcon(icon))
+
+    def clear_addresses(self, text):
+        if text == "Clear all...":
+            for _ in range(len(self._address_list) - 1):
+                self._address_list.pop(0)
+                self.ui.addrComboBox.removeItem(0)
+            self.ui.addrComboBox.clearEditText()
 
     def disconnect(self):
         try:

@@ -11,68 +11,87 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ConnectionDialog</string>
+   <string>Connection Options</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>uawidgets/resources/property.svg</normaloff>uawidgets/resources/property.svg</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
+   <item row="2" column="0">
+    <widget class="QLabel" name="certificateLabel">
+     <property name="font">
+      <font>
+       <italic>true</italic>
+      </font>
+     </property>
+     <property name="text">
+      <string>None</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
       <string>Security Policy</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="QComboBox" name="policyComboBox"/>
-   </item>
-   <item row="2" column="0">
+   <item row="1" column="0">
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>Message Security Mode</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="1" colspan="2">
+   <item row="1" column="1" colspan="2">
     <widget class="QComboBox" name="modeComboBox"/>
    </item>
+   <item row="0" column="1" colspan="2">
+    <widget class="QComboBox" name="policyComboBox"/>
+   </item>
    <item row="3" column="0">
-    <widget class="QLabel" name="certificateLabel">
+    <widget class="QLabel" name="privateKeyLabel">
+     <property name="font">
+      <font>
+       <italic>true</italic>
+      </font>
+     </property>
      <property name="text">
       <string>None</string>
      </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
     </widget>
    </item>
-   <item row="3" column="1" colspan="2">
+   <item row="2" column="1" colspan="2">
     <widget class="QPushButton" name="certificateButton">
+     <property name="toolTip">
+      <string>Select DER File</string>
+     </property>
      <property name="text">
       <string>Select certificate</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="privateKeyLabel">
-     <property name="text">
-      <string>None</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1" colspan="2">
+   <item row="3" column="1" colspan="2">
     <widget class="QPushButton" name="privateKeyButton">
+     <property name="toolTip">
+      <string>Select PEM File</string>
+     </property>
      <property name="text">
       <string>Select private key</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="2">
+   <item row="4" column="2">
     <widget class="QPushButton" name="closeButton">
      <property name="text">
       <string>Close</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QPushButton" name="queryButton">
-     <property name="text">
-      <string>Query server capability</string>
      </property>
     </widget>
    </item>

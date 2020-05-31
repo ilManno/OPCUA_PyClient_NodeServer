@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PyQt5.QtWidgets import QDialog, QFileDialog
 
 from connection_ui import Ui_ConnectionDialog
@@ -13,21 +15,16 @@ class ConnectionDialog(QDialog):
         self.uaclient = parent.uaclient
         self.uri = uri
         self.parent = parent
-        
-        self.ui.modeComboBox.addItem("None")
-        self.ui.modeComboBox.addItem("Sign")
-        self.ui.modeComboBox.addItem("SignAndEncrypt")
 
-        self.ui.policyComboBox.addItem("None")
-        self.ui.policyComboBox.addItem("Basic128Rsa15")
-        self.ui.policyComboBox.addItem("Basic256")
+        # Fill comboboxes
+        self.query()
 
         self.ui.closeButton.clicked.connect(self.accept)
         self.ui.certificateButton.clicked.connect(self.get_certificate)
         self.ui.privateKeyButton.clicked.connect(self.get_private_key)
-        self.ui.queryButton.clicked.connect(self.query)
 
     @trycatchslot
+    # Fill comboboxs
     def query(self):
         self.ui.modeComboBox.clear()
         self.ui.policyComboBox.clear()
@@ -83,11 +80,11 @@ class ConnectionDialog(QDialog):
         self.ui.privateKeyLabel.setText(value)
 
     def get_certificate(self):
-        path, ok = QFileDialog.getOpenFileName(self, "Select certificate", self.certificate_path, "Certificate (*.der)")
-        if ok:
-            self.ui.certificateLabel.setText(path)
+        path = QFileDialog.getOpenFileName(self, "Select certificate", self.certificate_path, "Certificate (*.der)")[0]
+        if path:
+            self.ui.certificateLabel.setText(Path(path).name)
 
     def get_private_key(self):
-        path, ok = QFileDialog.getOpenFileName(self, "Select private key", self.private_key_path, "Private key (*.pem)")
-        if ok:
-            self.ui.privateKeyLabel.setText(path)
+        path = QFileDialog.getOpenFileName(self, "Select private key", self.private_key_path, "Private key (*.pem)")[0]
+        if path:
+            self.ui.privateKeyLabel.setText(Path(path).name)
