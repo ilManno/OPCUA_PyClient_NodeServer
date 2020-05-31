@@ -48,7 +48,6 @@ class GetNodeTextButton(QWidget):
         return Node(self.server, current)
 
 
-
 class GetNodeButton(QPushButton):
     """
     Create Button which will query a node
@@ -103,7 +102,6 @@ class GetNodeDialog(QDialog):
 
         if currentnode:
             self.tree.expand_to_node(currentnode)
-
 
     def get_node(self):
         return self.tree.get_current_node()

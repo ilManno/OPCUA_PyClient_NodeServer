@@ -64,13 +64,13 @@ class EventUI(object):
         self.model.canDropMimeData = self.canDropMimeData
         self.model.dropMimeData = self.dropMimeData
 
-    def canDropMimeData(self, mdata, action, row, column, parent):
-        return True
-
     def show_error(self, *args):
         self.window.show_error(*args)
 
-    def dropMimeData(self, mdata, action, row, column, parent):
+    def canDropMimeData(self):
+        return True
+
+    def dropMimeData(self, mdata):
         node = self.uaclient.client.get_node(mdata.text())
         self._subscribe(node)
         return True
@@ -137,10 +137,10 @@ class DataChangeUI(object):
         self.model.canDropMimeData = self.canDropMimeData
         self.model.dropMimeData = self.dropMimeData
 
-    def canDropMimeData(self, mdata, action, row, column, parent):
+    def canDropMimeData(self):
         return True
 
-    def dropMimeData(self, mdata, action, row, column, parent):
+    def dropMimeData(self, mdata):
         node = self.uaclient.client.get_node(mdata.text())
         self._subscribe(node)
         return True
@@ -227,11 +227,11 @@ class Window(QMainWindow):
         self.ui.statusBar.hide()
 
         # setup QSettings for application and get a settings object
-        QCoreApplication.setOrganizationName("FreeOpcUa")
         QCoreApplication.setApplicationName("OpcUaClient")
         self.settings = QSettings()
 
-        self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4840", "opc.tcp://localhost:53530/OPCUA/SimulationServer/"])
+        self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4334/UA/NodeServer",
+                                                                  "opc.tcp://localhost:51210/UA/SampleServer"])
         print("ADR", self._address_list)
         self._address_list_max_count = int(self.settings.value("address_list_max_count", 10))
 
@@ -297,7 +297,7 @@ class Window(QMainWindow):
     @trycatchslot
     def show_refs(self, selection):
         if isinstance(selection, QItemSelection):
-            if not selection.indexes(): # no selection
+            if not selection.indexes():  # no selection
                 return
 
         node = self.get_current_node()
@@ -307,7 +307,7 @@ class Window(QMainWindow):
     @trycatchslot
     def show_attrs(self, selection):
         if isinstance(selection, QItemSelection):
-            if not selection.indexes(): # no selection
+            if not selection.indexes():  # no selection
                 return
 
         node = self.get_current_node()
@@ -340,6 +340,8 @@ class Window(QMainWindow):
         self.tree_ui.set_root_node(self.uaclient.client.get_root_node())
         self.ui.treeView.setFocus()
         self.load_current_node()
+        self.ui.connectButton.setText("Reconnect")
+        self.ui.disconnectButton.setEnabled(True)
 
     def _update_address_list(self, uri):
         if uri == self._address_list[0]:
@@ -357,13 +359,14 @@ class Window(QMainWindow):
             self.show_error(ex)
             raise
         finally:
+            self.ui.disconnectButton.setEnabled(False)
+            self.ui.connectButton.setText("Connect")
             self.save_current_node()
             self.tree_ui.clear()
             self.refs_ui.clear()
             self.attrs_ui.clear()
             self.datachange_ui.clear()
             self.event_ui.clear()
-
 
     def closeEvent(self, event):
         self.tree_ui.save_state()
@@ -410,7 +413,7 @@ class Window(QMainWindow):
         self._contextMenu.addAction(action)
 
     @trycatchslot
-    def _update_actions_state(self, current, previous):
+    def _update_actions_state(self, current):
         node = self.get_current_node(current)
         self.ui.actionCall.setEnabled(False)
         if node:

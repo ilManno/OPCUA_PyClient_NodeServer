@@ -117,6 +117,7 @@ class Ui_MainWindow(object):
         self.connectButton.setObjectName("connectButton")
         self.gridLayout.addWidget(self.connectButton, 1, 4, 1, 1)
         self.disconnectButton = QtWidgets.QPushButton(self.dockWidgetContents_2)
+        self.disconnectButton.setEnabled(False)
         self.disconnectButton.setObjectName("disconnectButton")
         self.gridLayout.addWidget(self.disconnectButton, 1, 5, 1, 1)
         self.addrComboBox = QtWidgets.QComboBox(self.dockWidgetContents_2)

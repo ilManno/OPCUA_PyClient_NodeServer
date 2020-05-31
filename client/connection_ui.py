@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'uaclient/connection_ui.ui'
+# Form implementation generated from reading ui file 'connection_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_ConnectionDialog(object):
     def setupUi(self, ConnectionDialog):
@@ -16,9 +18,6 @@ class Ui_ConnectionDialog(object):
         self.gridLayout.setContentsMargins(11, 11, 11, 11)
         self.gridLayout.setSpacing(6)
         self.gridLayout.setObjectName("gridLayout")
-        self.queryButton = QtWidgets.QPushButton(ConnectionDialog)
-        self.queryButton.setObjectName("queryButton")
-        self.gridLayout.addWidget(self.queryButton, 0, 0, 1, 2)
         self.label = QtWidgets.QLabel(ConnectionDialog)
         self.label.setObjectName("label")
         self.gridLayout.addWidget(self.label, 1, 0, 1, 1)
@@ -46,6 +45,9 @@ class Ui_ConnectionDialog(object):
         self.closeButton = QtWidgets.QPushButton(ConnectionDialog)
         self.closeButton.setObjectName("closeButton")
         self.gridLayout.addWidget(self.closeButton, 5, 2, 1, 1)
+        self.queryButton = QtWidgets.QPushButton(ConnectionDialog)
+        self.queryButton.setObjectName("queryButton")
+        self.gridLayout.addWidget(self.queryButton, 0, 0, 1, 1)
 
         self.retranslateUi(ConnectionDialog)
         QtCore.QMetaObject.connectSlotsByName(ConnectionDialog)
@@ -53,7 +55,6 @@ class Ui_ConnectionDialog(object):
     def retranslateUi(self, ConnectionDialog):
         _translate = QtCore.QCoreApplication.translate
         ConnectionDialog.setWindowTitle(_translate("ConnectionDialog", "ConnectionDialog"))
-        self.queryButton.setText(_translate("ConnectionDialog", "Query server capability"))
         self.label.setText(_translate("ConnectionDialog", "Security Policy"))
         self.label_2.setText(_translate("ConnectionDialog", "Message Security Mode"))
         self.certificateLabel.setText(_translate("ConnectionDialog", "None"))
@@ -61,4 +62,14 @@ class Ui_ConnectionDialog(object):
         self.privateKeyLabel.setText(_translate("ConnectionDialog", "None"))
         self.privateKeyButton.setText(_translate("ConnectionDialog", "Select private key"))
         self.closeButton.setText(_translate("ConnectionDialog", "Close"))
+        self.queryButton.setText(_translate("ConnectionDialog", "Query server capability"))
 
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    ConnectionDialog = QtWidgets.QDialog()
+    ui = Ui_ConnectionDialog()
+    ui.setupUi(ConnectionDialog)
+    ConnectionDialog.show()
+    sys.exit(app.exec_())

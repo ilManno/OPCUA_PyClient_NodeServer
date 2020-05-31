@@ -202,6 +202,9 @@
      </item>
      <item row="1" column="5">
       <widget class="QPushButton" name="disconnectButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Disconnect</string>
        </property>
