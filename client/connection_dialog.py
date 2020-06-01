@@ -7,17 +7,16 @@ from uawidgets.utils import trycatchslot
 
 
 class ConnectionDialog(QDialog):
-    def __init__(self, parent, uri):
+    def __init__(self, parent, endpoints):
         super().__init__()
         self.ui = Ui_ConnectionDialog()
         self.ui.setupUi(self)
 
         self.uaclient = parent.uaclient
-        self.uri = uri
         self.parent = parent
 
         # Fill comboboxes
-        self.query()
+        self.fill_fields(endpoints)
 
         self.ui.closeButton.clicked.connect(self.accept)
         self.ui.certificateButton.clicked.connect(self.get_certificate)
@@ -25,10 +24,9 @@ class ConnectionDialog(QDialog):
 
     @trycatchslot
     # Fill comboboxs
-    def query(self):
+    def fill_fields(self, endpoints):
         self.ui.modeComboBox.clear()
         self.ui.policyComboBox.clear()
-        endpoints = self.parent.uaclient.get_endpoints(self.uri)
         modes = []
         policies = []
         for edp in endpoints:

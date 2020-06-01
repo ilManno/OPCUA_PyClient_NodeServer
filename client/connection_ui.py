@@ -25,6 +25,7 @@ class Ui_ConnectionDialog(object):
         font = QtGui.QFont()
         font.setItalic(True)
         self.certificateLabel.setFont(font)
+        self.certificateLabel.setText("")
         self.certificateLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.certificateLabel.setObjectName("certificateLabel")
         self.gridLayout.addWidget(self.certificateLabel, 2, 0, 1, 1)
@@ -44,6 +45,7 @@ class Ui_ConnectionDialog(object):
         font = QtGui.QFont()
         font.setItalic(True)
         self.privateKeyLabel.setFont(font)
+        self.privateKeyLabel.setText("")
         self.privateKeyLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.privateKeyLabel.setObjectName("privateKeyLabel")
         self.gridLayout.addWidget(self.privateKeyLabel, 3, 0, 1, 1)
@@ -63,15 +65,13 @@ class Ui_ConnectionDialog(object):
     def retranslateUi(self, ConnectionDialog):
         _translate = QtCore.QCoreApplication.translate
         ConnectionDialog.setWindowTitle(_translate("ConnectionDialog", "Connection Options"))
-        self.certificateLabel.setText(_translate("ConnectionDialog", "None"))
         self.label.setText(_translate("ConnectionDialog", "Security Policy"))
         self.label_2.setText(_translate("ConnectionDialog", "Message Security Mode"))
-        self.privateKeyLabel.setText(_translate("ConnectionDialog", "None"))
         self.certificateButton.setToolTip(_translate("ConnectionDialog", "Select DER File"))
         self.certificateButton.setText(_translate("ConnectionDialog", "Select certificate"))
         self.privateKeyButton.setToolTip(_translate("ConnectionDialog", "Select PEM File"))
         self.privateKeyButton.setText(_translate("ConnectionDialog", "Select private key"))
-        self.closeButton.setText(_translate("ConnectionDialog", "Close"))
+        self.closeButton.setText(_translate("ConnectionDialog", "Connect"))
 
 
 if __name__ == "__main__":

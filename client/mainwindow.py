@@ -162,7 +162,19 @@ class DataChangeUI(object):
             return
         self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         text = str(node.get_display_name().Text)
-        row = [QStandardItem(text), QStandardItem("No Data yet"), QStandardItem("")]
+        if node.get_parent().get_type_definition() == ua.FourByteNodeId(1002, 1):
+            icon = QIcon("uawidgets/resources/temp_sensor.svg")
+        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1003, 1):
+            icon = QIcon("uawidgets/resources/flow_sensor.svg")
+        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1006, 1):
+            icon = QIcon("uawidgets/resources/boiler.svg")
+        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1007, 1):
+            icon = QIcon("uawidgets/resources/motor.svg")
+        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1008, 1):
+            icon = QIcon("uawidgets/resources/valve.svg")
+        else:
+            icon = QIcon("uawidgets/resources/object.svg")
+        row = [QStandardItem(icon, text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
         self._subscribed_nodes.append(node)
@@ -257,7 +269,7 @@ class Window(QMainWindow):
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_refs)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
 
-        # Right Click
+        # Context Menu
         self.ui.actionCopyPath.triggered.connect(self.tree_ui.copy_path)
         self.ui.actionCopyNodeId.triggered.connect(self.tree_ui.copy_nodeid)
         self.ui.actionCall.triggered.connect(self.call_method)
@@ -287,19 +299,24 @@ class Window(QMainWindow):
     def _uri_changed(self, uri):
         self.uaclient.load_security_settings(uri)
 
+    @trycatchslot
     def show_connection_dialog(self):
-        # Query endpoints
-        dia = ConnectionDialog(self, self.ui.addrComboBox.currentText())
-        dia.security_mode = self.uaclient.security_mode
-        dia.security_policy = self.uaclient.security_policy
-        dia.certificate_path = self.uaclient.certificate_path
-        dia.private_key_path = self.uaclient.private_key_path
+        try:
+            # Query Endpoints
+            endpoints = self.uaclient.get_endpoints(self.ui.addrComboBox.currentText())
+        except Exception as ex:
+            self.show_error(ex)
+            raise
+
+        # Init Dialog
+        dia = ConnectionDialog(self, endpoints)
         ret = dia.exec_()
         if ret:
             self.uaclient.security_mode = dia.security_mode
             self.uaclient.security_policy = dia.security_policy
             self.uaclient.certificate_path = dia.certificate_path
             self.uaclient.private_key_path = dia.private_key_path
+            self.handle_connect()
 
     @trycatchslot
     def show_refs(self, selection):
