@@ -188,7 +188,18 @@ class TreeViewModel(QStandardItemModel):
             if desc.TypeDefinition == ua.TwoByteNodeId(ua.ObjectIds.FolderType):
                 item[0].setIcon(QIcon("uawidgets/resources/folder.svg"))
             else:
+                # The item is an object
                 item[0].setIcon(QIcon("uawidgets/resources/object.svg"))
+                if desc.TypeDefinition == ua.FourByteNodeId(1002, 1):
+                    item[0].setIcon(QIcon("uawidgets/resources/temp_sensor.svg"))
+                if desc.TypeDefinition == ua.FourByteNodeId(1003, 1):
+                    item[0].setIcon(QIcon("uawidgets/resources/flow_sensor.svg"))
+                if desc.TypeDefinition == ua.FourByteNodeId(1006, 1):
+                    item[0].setIcon(QIcon("uawidgets/resources/boiler.svg"))
+                if desc.TypeDefinition == ua.FourByteNodeId(1007, 1):
+                    item[0].setIcon(QIcon("uawidgets/resources/motor.svg"))
+                if desc.TypeDefinition == ua.FourByteNodeId(1008, 1):
+                    item[0].setIcon(QIcon("uawidgets/resources/valve.svg"))
         elif desc.NodeClass == ua.NodeClass.Variable:
             if desc.TypeDefinition == ua.TwoByteNodeId(ua.ObjectIds.PropertyType):
                 item[0].setIcon(QIcon("uawidgets/resources/property.svg"))

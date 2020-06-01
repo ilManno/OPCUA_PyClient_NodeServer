@@ -234,7 +234,9 @@ class Window(QMainWindow):
         print("ADR", self._address_list)
         self._address_list_max_count = int(self.settings.value("address_list_max_count", 10))
 
-        # init widgets
+        self.uaclient = UaClient()
+
+        # URL ComboBox
         address_list_len = len(self._address_list)
         for index in range(address_list_len):
             self.ui.addrComboBox.insertItem(index, self._address_list[index])
@@ -244,41 +246,43 @@ class Window(QMainWindow):
         self.ui.addrComboBox.currentTextChanged.connect(self.clear_addresses)
         self.ui.addrComboBox.lineEdit().returnPressed.connect(self.handle_connect)
         self.ui.addrComboBox.setCompleter(None)
+        self.ui.addrComboBox.currentTextChanged.connect(self._uri_changed)
+        self._uri_changed(self.ui.addrComboBox.currentText())  # force update for current value at startup
 
-        self.uaclient = UaClient()
-
+        # Objects Tree
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
         self.setup_context_menu_tree()
         self.ui.treeView.selectionModel().currentChanged.connect(self._update_actions_state)
-
-        self.refs_ui = RefsWidget(self.ui.refView)
-        self.refs_ui.error.connect(self.show_error)
-        self.attrs_ui = AttrsWidget(self.ui.attrView)
-        self.attrs_ui.error.connect(self.show_error)
-        self.datachange_ui = DataChangeUI(self, self.uaclient)
-        self.event_ui = EventUI(self, self.uaclient)
-
-        self.ui.addrComboBox.currentTextChanged.connect(self._uri_changed)
-        self._uri_changed(self.ui.addrComboBox.currentText())  # force update for current value at startup
-
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_refs)
+        self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
+
+        # Right Click
         self.ui.actionCopyPath.triggered.connect(self.tree_ui.copy_path)
         self.ui.actionCopyNodeId.triggered.connect(self.tree_ui.copy_nodeid)
         self.ui.actionCall.triggered.connect(self.call_method)
 
-        self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
+        # References Widget
+        self.refs_ui = RefsWidget(self.ui.refView)
+        self.refs_ui.error.connect(self.show_error)
+
+        # Attributes Widget
+        self.attrs_ui = AttrsWidget(self.ui.attrView)
+        self.attrs_ui.error.connect(self.show_error)
+        self.datachange_ui = DataChangeUI(self, self.uaclient)
+        self.event_ui = EventUI(self, self.uaclient)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
 
+        # Connection Buttons
+        self.ui.connectButton.clicked.connect(self.handle_connect)
+        # self.ui.treeView.expanded.connect(self._fit)
+        self.ui.optionsButton.clicked.connect(self.show_connection_dialog)
+
+        # Main Window
         self.resize(int(self.settings.value("main_window_width", 800)), int(self.settings.value("main_window_height", 600)))
         data = self.settings.value("main_window_state", None)
         if data:
             self.restoreState(data)
-
-        self.ui.connectButton.clicked.connect(self.handle_connect)
-        # self.ui.treeView.expanded.connect(self._fit)
-
-        self.ui.optionsButton.clicked.connect(self.show_connection_dialog)
 
     def _uri_changed(self, uri):
         self.uaclient.load_security_settings(uri)
