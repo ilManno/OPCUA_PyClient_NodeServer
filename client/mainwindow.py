@@ -308,14 +308,17 @@ class Window(QMainWindow):
             self.show_error(ex)
             raise
 
-        # Init Dialog
-        dia = ConnectionDialog(self, endpoints)
+        # Init Dialog with current settings
+        dia = ConnectionDialog(self,
+                               endpoints,
+                               self.uaclient.security_policy,
+                               self.uaclient.security_mode,
+                               self.uaclient.certificate_path,
+                               self.uaclient.private_key_path)
+        # Load settings
         ret = dia.exec_()
         if ret:
-            self.uaclient.security_mode = dia.security_mode
-            self.uaclient.security_policy = dia.security_policy
-            self.uaclient.certificate_path = dia.certificate_path
-            self.uaclient.private_key_path = dia.private_key_path
+            self.uaclient.security_policy, self.uaclient.security_mode, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
             self.handle_connect()
 
     @trycatchslot
@@ -353,10 +356,15 @@ class Window(QMainWindow):
 
     @trycatchslot
     def connect(self):
+        self.ui.connectButton.setText("Connecting...")
+        self.ui.connectButton.setEnabled(False)
+        self.ui.connectButton.repaint()
         uri = self.ui.addrComboBox.currentText()
         try:
             self.uaclient.connect(uri)
         except Exception as ex:
+            self.ui.connectButton.setText("Connect")
+            self.ui.connectButton.setEnabled(True)
             self.show_error(ex)
             raise
 
@@ -365,6 +373,7 @@ class Window(QMainWindow):
         self.ui.treeView.setFocus()
         self.load_current_node()
         self.ui.connectButton.setText("Disconnect")
+        self.ui.connectButton.setEnabled(True)
         self.ui.optionsButton.setEnabled(False)
         self.ui.addrComboBox.setEnabled(False)
 

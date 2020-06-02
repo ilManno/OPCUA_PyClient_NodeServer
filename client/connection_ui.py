@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'connection_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.0
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -30,9 +30,11 @@ class Ui_ConnectionDialog(object):
         self.certificateLabel.setObjectName("certificateLabel")
         self.gridLayout.addWidget(self.certificateLabel, 2, 0, 1, 1)
         self.label = QtWidgets.QLabel(ConnectionDialog)
+        self.label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label.setObjectName("label")
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
         self.label_2 = QtWidgets.QLabel(ConnectionDialog)
+        self.label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_2.setObjectName("label_2")
         self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
         self.modeComboBox = QtWidgets.QComboBox(ConnectionDialog)
