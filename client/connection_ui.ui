@@ -15,26 +15,11 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>uawidgets/resources/property.svg</normaloff>uawidgets/resources/property.svg</iconset>
+    <normaloff>uawidgets/icons/property.svg</normaloff>uawidgets/icons/property.svg</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="0">
-    <widget class="QLabel" name="certificateLabel">
-     <property name="font">
-      <font>
-       <italic>true</italic>
-      </font>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
+   <item row="1" column="0">
+    <widget class="QLabel" name="policyLabel">
      <property name="text">
       <string>Security Policy</string>
      </property>
@@ -42,22 +27,6 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Message Security Mode</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="QComboBox" name="modeComboBox"/>
-   </item>
-   <item row="0" column="1" colspan="2">
-    <widget class="QComboBox" name="policyComboBox"/>
    </item>
    <item row="3" column="0">
     <widget class="QLabel" name="privateKeyLabel">
@@ -74,13 +43,23 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1" colspan="2">
-    <widget class="QPushButton" name="certificateButton">
-     <property name="toolTip">
-      <string>Select DER File</string>
-     </property>
+   <item row="4" column="2">
+    <widget class="QPushButton" name="closeButton">
      <property name="text">
-      <string>Select certificate</string>
+      <string>Connect</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="2">
+    <widget class="QComboBox" name="modeComboBox"/>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="modeLabel">
+     <property name="text">
+      <string>Message Security Mode</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
@@ -94,12 +73,33 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="2">
-    <widget class="QPushButton" name="closeButton">
+   <item row="2" column="1" colspan="2">
+    <widget class="QPushButton" name="certificateButton">
+     <property name="toolTip">
+      <string>Select DER File</string>
+     </property>
      <property name="text">
-      <string>Connect</string>
+      <string>Select certificate</string>
      </property>
     </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="certificateLabel">
+     <property name="font">
+      <font>
+       <italic>true</italic>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="2">
+    <widget class="QComboBox" name="policyComboBox"/>
    </item>
   </layout>
  </widget>

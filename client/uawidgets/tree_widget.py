@@ -186,35 +186,35 @@ class TreeViewModel(QStandardItemModel):
         item = [QStandardItem(dname), QStandardItem(bname), QStandardItem(nodeid)]
         if desc.NodeClass == ua.NodeClass.Object:
             if desc.TypeDefinition == ua.TwoByteNodeId(ua.ObjectIds.FolderType):
-                item[0].setIcon(QIcon("uawidgets/resources/folder.svg"))
+                item[0].setIcon(QIcon("uawidgets/icons/folder.svg"))
             else:
                 if desc.TypeDefinition == ua.FourByteNodeId(1002, 1):
-                    item[0].setIcon(QIcon("uawidgets/resources/temp_sensor.svg"))
+                    item[0].setIcon(QIcon("uawidgets/icons/temp_sensor.svg"))
                 elif desc.TypeDefinition == ua.FourByteNodeId(1003, 1):
-                    item[0].setIcon(QIcon("uawidgets/resources/flow_sensor.svg"))
+                    item[0].setIcon(QIcon("uawidgets/icons/flow_sensor.svg"))
                 elif desc.TypeDefinition == ua.FourByteNodeId(1006, 1):
-                    item[0].setIcon(QIcon("uawidgets/resources/boiler.svg"))
+                    item[0].setIcon(QIcon("uawidgets/icons/boiler.svg"))
                 elif desc.TypeDefinition == ua.FourByteNodeId(1007, 1):
-                    item[0].setIcon(QIcon("uawidgets/resources/motor.svg"))
+                    item[0].setIcon(QIcon("uawidgets/icons/motor.svg"))
                 elif desc.TypeDefinition == ua.FourByteNodeId(1008, 1):
-                    item[0].setIcon(QIcon("uawidgets/resources/valve.svg"))
+                    item[0].setIcon(QIcon("uawidgets/icons/valve.svg"))
                 else:
-                    item[0].setIcon(QIcon("uawidgets/resources/object.svg"))
+                    item[0].setIcon(QIcon("uawidgets/icons/object.svg"))
         elif desc.NodeClass == ua.NodeClass.Variable:
             if desc.TypeDefinition == ua.TwoByteNodeId(ua.ObjectIds.PropertyType):
-                item[0].setIcon(QIcon("uawidgets/resources/property.svg"))
+                item[0].setIcon(QIcon("uawidgets/icons/property.svg"))
             else:
-                item[0].setIcon(QIcon("uawidgets/resources/variable.svg"))
+                item[0].setIcon(QIcon("uawidgets/icons/variable.svg"))
         elif desc.NodeClass == ua.NodeClass.Method:
-            item[0].setIcon(QIcon("uawidgets/resources/method.svg"))
+            item[0].setIcon(QIcon("uawidgets/icons/method.svg"))
         elif desc.NodeClass == ua.NodeClass.ObjectType:
-            item[0].setIcon(QIcon("uawidgets/resources/object_type.svg"))
+            item[0].setIcon(QIcon("uawidgets/icons/object_type.svg"))
         elif desc.NodeClass == ua.NodeClass.VariableType:
-            item[0].setIcon(QIcon("uawidgets/resources/variable_type.svg"))
+            item[0].setIcon(QIcon("uawidgets/icons/variable_type.svg"))
         elif desc.NodeClass == ua.NodeClass.DataType:
-            item[0].setIcon(QIcon("uawidgets/resources/data_type.svg"))
+            item[0].setIcon(QIcon("uawidgets/icons/data_type.svg"))
         elif desc.NodeClass == ua.NodeClass.ReferenceType:
-            item[0].setIcon(QIcon("uawidgets/resources/reference_type.svg"))
+            item[0].setIcon(QIcon("uawidgets/icons/reference_type.svg"))
         if node:
             item[0].setData(node, Qt.UserRole)
         else:

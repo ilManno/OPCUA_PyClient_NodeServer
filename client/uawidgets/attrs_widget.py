@@ -1,7 +1,7 @@
 import logging
 
 from PyQt5.QtCore import pyqtSignal, Qt, QObject, QSettings
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
 from PyQt5.QtWidgets import QApplication, QMenu, QAction, QStyledItemDelegate, QComboBox, QVBoxLayout, QCheckBox, QDialog, QAbstractItemView
 
 from opcua import ua, Node
@@ -187,18 +187,26 @@ class AttrsWidget(QObject):
     def _show_value_attr(self, attr, dv):
         name_item = QStandardItem("Value")
         vitem = QStandardItem()
-        items = self._show_val(name_item, None, "Value", dv.Value.Value, dv.Value.VariantType)
+        items = self._show_val(name_item, None, "Value", dv.Value.Value, dv.Value.VariantType, dv.StatusCode.value)
         items[1].setData(AttributeData(attr, dv.Value.Value, dv.Value.VariantType), Qt.UserRole)
         row = [name_item, vitem, QStandardItem(dv.Value.VariantType.name)]
         self.model.appendRow(row)
         self._show_timestamps(name_item, dv)
 
-    def _show_val(self, parent, obj, name, val, vtype):
+    def _show_val(self, parent, obj, name, val, vtype, status_code=None):
         name_item = QStandardItem(name)
         vitem = QStandardItem()
         vitem.setText(val_to_string(val))
         vitem.setData(MemberData(obj, name, val, vtype), Qt.UserRole)
         row = [name_item, vitem, QStandardItem(vtype.name)]
+        # Color value according to status code
+        if status_code is not None:
+            if status_code == ua.StatusCodes.Good:
+                vitem.setForeground(QBrush(QColor("green")))
+            elif status_code == ua.StatusCodes.Uncertain:
+                vitem.setForeground(QBrush(QColor("yellow")))
+            else:  # StatusCode = Bad:
+                vitem.setForeground(QBrush(QColor("red")))
         # if we have a list or extension object we display children
         if isinstance(val, list):
             row[2].setText("List of " + vtype.name)
@@ -241,13 +249,12 @@ class AttrsWidget(QObject):
         string = val_to_string(dv.SourceTimestamp)
         item.appendRow([QStandardItem("Source Timestamp"), QStandardItem(string), QStandardItem(ua.VariantType.DateTime.name)])
 
-
     def get_all_attrs(self):
         attrs = [attr for attr in ua.AttributeIds]
         dvs = self.current_node.get_attributes(attrs)
         res = []
         for idx, dv in enumerate(dvs):
-            if dv.StatusCode.is_good():
+            if dv.StatusCode.is_good() or (attrs[idx] == ua.AttributeIds.Value and (dv.StatusCode.value == ua.StatusCodes.Uncertain or dv.StatusCode.value == ua.StatusCodes.Bad)):
                 res.append((attrs[idx], dv))
         res.sort(key=lambda x: x[0].name)
         return res
@@ -356,7 +363,7 @@ class MyDelegate(QStyledItemDelegate):
 
     def _set_attribute_data(self, data, editor, model, idx):
         if data.attr is ua.AttributeIds.Value:
-            #for value we checkd data type from the variable data type
+            #for value we checked data type from the variable data type
             # this is more robust
             try:
                 data.uatype = self.attrs_widget.current_node.get_data_type_as_variant_type()

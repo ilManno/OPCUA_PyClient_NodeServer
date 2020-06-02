@@ -5,7 +5,7 @@ from uawidgets.utils import trycatchslot
 
 
 class ConnectionDialog(QDialog):
-    def __init__(self, parent, endpoints, security_policy, security_mode, certificate_path, private_key_path):
+    def __init__(self, parent, endpoints_dict, security_mode, security_policy, certificate_path, private_key_path):
         super().__init__()
         self.ui = Ui_ConnectionDialog()
         self.ui.setupUi(self)
@@ -13,43 +13,59 @@ class ConnectionDialog(QDialog):
         self.uaclient = parent.uaclient
         self.parent = parent
 
+        self.endpoints_dict = endpoints_dict
+
         # Fill comboboxes
-        self.fill_fields(endpoints, security_policy, security_mode, certificate_path, private_key_path)
+        self._init_fields(security_mode, security_policy, certificate_path, private_key_path)
+        self.ui.modeComboBox.currentTextChanged.connect(self._change_policies)
 
         self.ui.closeButton.clicked.connect(self.accept)
-        self.ui.certificateButton.clicked.connect(self.get_certificate)
-        self.ui.privateKeyButton.clicked.connect(self.get_private_key)
+        self.ui.certificateButton.clicked.connect(self.select_certificate)
+        self.ui.privateKeyButton.clicked.connect(self.select_private_key)
 
     @trycatchslot
     # Fill comboboxes
-    def fill_fields(self, endpoints, security_policy, security_mode, certificate_path, private_key_path):
+    def _init_fields(self, security_mode, security_policy, certificate_path, private_key_path):
         self.ui.modeComboBox.clear()
         self.ui.policyComboBox.clear()
-        modes = []
-        policies = []
-        for edp in endpoints:
-            mode = edp.SecurityMode.name
-            if mode not in modes:
-                self.ui.modeComboBox.addItem(mode)
-                modes.append(mode)
-            policy = edp.SecurityPolicyUri.split("#")[1]
-            if policy not in policies:
-                self.ui.policyComboBox.addItem(policy)
-                policies.append(policy)
-        self.ui.policyComboBox.setCurrentText(security_policy)
+
+        self.ui.modeComboBox.addItems(self.endpoints_dict.keys())
         self.ui.modeComboBox.setCurrentText(security_mode)
+        current_mode = self.ui.modeComboBox.currentText()
+        self.ui.policyComboBox.addItems(self.endpoints_dict[current_mode])
+        self.ui.policyComboBox.setCurrentText(security_policy)
+
+        self._toggle_security_fields(current_mode)
+
         self.ui.certificateLabel.setText(certificate_path)
         self.ui.privateKeyLabel.setText(private_key_path)
 
-    def get_selected_options(self):
-        return self.ui.policyComboBox.currentText(), self.ui.modeComboBox.currentText(), self.ui.certificateLabel.text(), self.ui.privateKeyLabel.text()
+    def _change_policies(self, mode):
+        self.ui.policyComboBox.clear()
+        self.ui.policyComboBox.addItems(self.endpoints_dict[mode])
+        self._toggle_security_fields(mode)
 
-    def get_certificate(self):
-        path = QFileDialog.getOpenFileName(self, "Select certificate", self.certificate_path, "Certificate (*.der)")[0]
+    def _toggle_security_fields(self, mode):
+        if mode == "None_":
+            self.ui.certificateButton.setEnabled(False)
+            self.ui.certificateLabel.hide()
+            self.ui.privateKeyButton.setEnabled(False)
+            self.ui.privateKeyLabel.hide()
+        else:
+            self.ui.certificateButton.setEnabled(True)
+            self.ui.certificateLabel.show()
+            self.ui.privateKeyButton.setEnabled(True)
+            self.ui.privateKeyLabel.show()
+
+    def get_selected_options(self):
+        return self.ui.modeComboBox.currentText(), self.ui.policyComboBox.currentText(), self.ui.certificateLabel.text(), self.ui.privateKeyLabel.text()
+
+    def select_certificate(self):
+        path = QFileDialog.getOpenFileName(self, "Select certificate", self.ui.certificateLabel.text(), "Certificate (*.der)")[0]
         if path:
             self.ui.certificateLabel.setText(path)
 
-    def get_private_key(self):
-        path = QFileDialog.getOpenFileName(self, "Select private key", self.private_key_path, "Private key (*.pem)")[0]
+    def select_private_key(self):
+        path = QFileDialog.getOpenFileName(self, "Select private key", self.ui.privateKeyLabel.text(), "Private key (*.pem)")[0]
         if path:
             self.ui.privateKeyLabel.setText(path)

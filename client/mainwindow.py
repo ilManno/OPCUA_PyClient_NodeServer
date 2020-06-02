@@ -163,17 +163,17 @@ class DataChangeUI(object):
         self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         text = str(node.get_display_name().Text)
         if node.get_parent().get_type_definition() == ua.FourByteNodeId(1002, 1):
-            icon = QIcon("uawidgets/resources/temp_sensor.svg")
+            icon = QIcon("uawidgets/icons/temp_sensor.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1003, 1):
-            icon = QIcon("uawidgets/resources/flow_sensor.svg")
+            icon = QIcon("uawidgets/icons/flow_sensor.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1006, 1):
-            icon = QIcon("uawidgets/resources/boiler.svg")
+            icon = QIcon("uawidgets/icons/boiler.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1007, 1):
-            icon = QIcon("uawidgets/resources/motor.svg")
+            icon = QIcon("uawidgets/icons/motor.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1008, 1):
-            icon = QIcon("uawidgets/resources/valve.svg")
+            icon = QIcon("uawidgets/icons/valve.svg")
         else:
-            icon = QIcon("uawidgets/resources/object.svg")
+            icon = QIcon("uawidgets/icons/object.svg")
         row = [QStandardItem(icon, text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
@@ -252,7 +252,7 @@ class Window(QMainWindow):
         address_list_len = len(self._address_list)
         for index in range(address_list_len):
             self.ui.addrComboBox.insertItem(index, self._address_list[index])
-            icon = "uawidgets/resources/server.svg" if index < address_list_len - 1 else "uawidgets/resources/x.svg"
+            icon = "uawidgets/icons/server.svg" if index < address_list_len - 1 else "uawidgets/icons/x.svg"
             self.ui.addrComboBox.setItemIcon(index, QIcon(icon))
 
         self.ui.addrComboBox.currentTextChanged.connect(self.clear_addresses)
@@ -308,17 +308,23 @@ class Window(QMainWindow):
             self.show_error(ex)
             raise
 
+        # Create dict of endpoints
+        endpoints_dict = {"None_": set(), "Sign": set(), "SignAndEncrypt": set()}
+        for edp in endpoints:
+            mode = edp.SecurityMode.name
+            policy = edp.SecurityPolicyUri.split("#")[1]
+            endpoints_dict[mode] |= {policy}
         # Init Dialog with current settings
         dia = ConnectionDialog(self,
-                               endpoints,
-                               self.uaclient.security_policy,
+                               endpoints_dict,
                                self.uaclient.security_mode,
+                               self.uaclient.security_policy,
                                self.uaclient.certificate_path,
                                self.uaclient.private_key_path)
         # Load settings
         ret = dia.exec_()
         if ret:
-            self.uaclient.security_policy, self.uaclient.security_mode, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
+            self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
             self.handle_connect()
 
     @trycatchslot
@@ -388,7 +394,7 @@ class Window(QMainWindow):
         address_list_len = len(self._address_list)
         for index in range(address_list_len):
             self.ui.addrComboBox.insertItem(index, self._address_list[index])
-            icon = "uawidgets/resources/server.svg" if index < address_list_len - 1 else "uawidgets/resources/x.svg"
+            icon = "uawidgets/icons/server.svg" if index < address_list_len - 1 else "uawidgets/icons/x.svg"
             self.ui.addrComboBox.setItemIcon(index, QIcon(icon))
 
     def clear_addresses(self, text):

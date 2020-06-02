@@ -1,3 +1,5 @@
+let path = require("path");
+
 let opcua = require("node-opcua");
 
 let server = new opcua.OPCUAServer({
@@ -7,7 +9,11 @@ let server = new opcua.OPCUAServer({
         productName: "NodeServer1",
         buildNumber: "1",
         buildDate: new Date()
-    }
+    },
+    serverCertificateManager: new opcua.OPCUACertificateManager({ 
+        automaticallyAcceptUnknownCertificate: true,
+        rootFolder: path.join(__dirname, "certs")
+    })
 });
 
 server.initialize(() => {

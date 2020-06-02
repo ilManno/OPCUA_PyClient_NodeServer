@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>uawidgets/resources/client.svg</normaloff>uawidgets/resources/client.svg</iconset>
+    <normaloff>uawidgets/icons/client.svg</normaloff>uawidgets/icons/client.svg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
@@ -60,7 +60,7 @@
      <x>0</x>
      <y>0</y>
      <width>922</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuView">

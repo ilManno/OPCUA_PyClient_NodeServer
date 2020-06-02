@@ -2,7 +2,7 @@ import logging
 
 from PyQt5.QtCore import QSettings
 
-from opcua import crypto, ua, Client, Node
+from opcua import crypto, ua, Client
 from opcua.tools import endpoint_to_strings
 
 
@@ -23,8 +23,8 @@ class UaClient:
         self._event_sub = None
         self._subs_dc = {}
         self._subs_ev = {}
-        self.security_policy = "None"
         self.security_mode = "None_"
+        self.security_policy = "None"
         self.certificate_path = ""
         self.private_key_path = ""
 
@@ -50,14 +50,14 @@ class UaClient:
     def load_security_settings(self, uri):
         mysettings = self.settings.value("security_settings", None)
         if mysettings is not None and uri in mysettings:
-            policy, mode, cert, key = mysettings[uri]
-            self.security_policy = policy
+            mode, policy, cert, key = mysettings[uri]
             self.security_mode = mode
+            self.security_policy = policy
             self.certificate_path = cert
             self.private_key_path = key
         else:
-            self.security_policy = "None"
             self.security_mode = "None_"
+            self.security_policy = "None"
             self.certificate_path = ""
             self.private_key_path = ""
 
@@ -65,8 +65,8 @@ class UaClient:
         mysettings = self.settings.value("security_settings", None)
         if mysettings is None:
             mysettings = {}
-        mysettings[uri] = [self.security_policy,
-                           self.security_mode,
+        mysettings[uri] = [self.security_mode,
+                           self.security_policy,
                            self.certificate_path,
                            self.private_key_path]
         self.settings.setValue("security_settings", mysettings)
@@ -77,13 +77,14 @@ class UaClient:
     def connect(self, uri):
         logger.info("Connecting to %s with parameters %s, %s, %s, %s", uri, self.security_mode, self.security_policy, self.certificate_path, self.private_key_path)
         self.client = Client(uri)
-        if self.security_policy != "None" and self.security_mode != "None_":
+        if self.security_mode != "None_" and self.security_policy != "None":
             self.client.set_security(
                 getattr(crypto.security_policies, 'SecurityPolicy' + self.security_policy),
                 self.certificate_path,
                 self.private_key_path,
                 mode=getattr(ua.MessageSecurityMode, self.security_mode)
             )
+        self.client.application_uri = "urn:example.org:FreeOpcUa:python-opcua"
         self.client.connect()
         self._connected = True
         self.save_security_settings(uri)
