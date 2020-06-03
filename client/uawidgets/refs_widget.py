@@ -68,7 +68,7 @@ class RefsWidget(QObject):
         self.node = None
 
     def _make_default_ref(self):
-        #FIXME: remeber last choosen values or use values that make sense
+        #FIXME: remember last chosen values or use values that make sense
         ref = ua.ReferenceDescription()
         return ref
 

@@ -56,19 +56,19 @@ class TreeWidget(QObject):
         Expand tree until given node and select it
         """
         if isinstance(node, str):
-            idxlist = self.model.match(self.model.index(0, 0), Qt.DisplayRole, node, 1, Qt.MatchExactly|Qt.MatchRecursive)
+            idxlist = self.model.match(self.model.index(0, 0), Qt.DisplayRole, node, 1, Qt.MatchExactly | Qt.MatchRecursive)
             if not idxlist:
                 raise ValueError(f"Node {node} not found in tree")
             node = self.model.data(idxlist[0], Qt.UserRole)
         path = node.get_path()
         for node in path:
             # FIXME: this would be the correct way if it would work
-            #idxlist = self.model.match(self.model.index(0, 0), Qt.UserRole, node.node, 2, Qt.MatchExactly|Qt.MatchRecursive)
+            #idxlist = self.model.match(self.model.index(0, 0), Qt.UserRole, node.node, 2, Qt.MatchExactly | Qt.MatchRecursive)
             try:
                 text = node.get_display_name().Text
             except UaError as ex:
                 return
-            idxlist = self.model.match(self.model.index(0, 0), Qt.DisplayRole, text, 1, Qt.MatchExactly|Qt.MatchRecursive)
+            idxlist = self.model.match(self.model.index(0, 0), Qt.DisplayRole, text, 1, Qt.MatchExactly | Qt.MatchRecursive)
             if idxlist:
                 idx = idxlist[0]
                 self.view.setExpanded(idx, True)

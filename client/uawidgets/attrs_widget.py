@@ -104,7 +104,7 @@ class AttrsWidget(QObject):
         # Context menu
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self.showContextMenu)
-        copyaction = QAction("&Copy Value", self.model)
+        copyaction = QAction("Copy Value", self.model)
         copyaction.triggered.connect(self._copy_value)
         self._contextMenu = QMenu()
         self._contextMenu.addAction(copyaction)

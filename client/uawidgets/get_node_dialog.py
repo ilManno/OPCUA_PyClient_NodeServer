@@ -8,7 +8,7 @@ from uawidgets.tree_widget import TreeWidget
 
 class GetNodeTextButton(QWidget):
     """
-    Create a text field with  a button which will query a node
+    Create a text field with a button which will query a node
     """
 
     def __init__(self, parent, currentnode, startnode):
@@ -121,7 +121,7 @@ class GetDataTypeNodeButton(GetNodeButton):
     """
 
     def __init__(self, parent, server, settings, dtype=None):
-        self.settings = settings #We pass settings because we cannot create QSettings before __inint__ of super()
+        self.settings = settings #We pass settings because we cannot create QSettings before __init__ of super()
         base_data_type = server.get_node(ua.ObjectIds.BaseDataType)
         if dtype is None:
             dtype = self.settings.value("last_datatype", None)

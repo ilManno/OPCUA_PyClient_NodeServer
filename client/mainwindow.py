@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QItemSelection, QCoreApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QBrush, QColor
 from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu
 
 from opcua import ua, Node
@@ -21,19 +21,6 @@ from uaclient import UaClient
 
 
 logger = logging.getLogger(__name__)
-
-
-class DataChangeHandler(QObject):
-    data_change_fired = pyqtSignal(object, str, str)
-
-    def datachange_notification(self, node, val, data):
-        if data.monitored_item.Value.SourceTimestamp:
-            dato = data.monitored_item.Value.SourceTimestamp.isoformat()
-        elif data.monitored_item.Value.ServerTimestamp:
-            dato = data.monitored_item.Value.ServerTimestamp.isoformat()
-        else:
-            dato = datetime.now().isoformat()
-        self.data_change_fired.emit(node, str(val), dato)
 
 
 class EventHandler(QObject):
@@ -66,10 +53,10 @@ class EventUI(object):
     def show_error(self, *args):
         self.window.show_error(*args)
 
-    def canDropMimeData(self):
+    def canDropMimeData(self, mdata, action, row, column, parent):
         return True
 
-    def dropMimeData(self, mdata):
+    def dropMimeData(self, mdata, action, row, column, parent):
         node = self.uaclient.client.get_node(mdata.text())
         self._subscribe(node)
         return True
@@ -111,6 +98,20 @@ class EventUI(object):
         self.model.appendRow([QStandardItem(str(event))])
 
 
+class DataChangeHandler(QObject):
+    data_change_fired = pyqtSignal(object, str, int, str)
+
+    def datachange_notification(self, node, val, data):
+        status_code = data.monitored_item.Value.StatusCode.value
+        if data.monitored_item.Value.SourceTimestamp:
+            timestamp = data.monitored_item.Value.SourceTimestamp.isoformat()
+        elif data.monitored_item.Value.ServerTimestamp:
+            timestamp = data.monitored_item.Value.ServerTimestamp.isoformat()
+        else:
+            timestamp = datetime.now().isoformat()
+        self.data_change_fired.emit(node, str(val), status_code, timestamp)
+
+
 class DataChangeUI(object):
 
     def __init__(self, window, uaclient):
@@ -136,10 +137,10 @@ class DataChangeUI(object):
         self.model.canDropMimeData = self.canDropMimeData
         self.model.dropMimeData = self.dropMimeData
 
-    def canDropMimeData(self):
+    def canDropMimeData(self, mdata, action, row, column, parent):
         return True
 
-    def dropMimeData(self, mdata):
+    def dropMimeData(self, mdata, action, row, column, parent):
         node = self.uaclient.client.get_node(mdata.text())
         self._subscribe(node)
         return True
@@ -158,7 +159,7 @@ class DataChangeUI(object):
             if node is None:
                 return
         if node in self._subscribed_nodes:
-            logger.warning("allready subscribed to node: %s ", node)
+            logger.warning("already subscribed to node: %s ", node)
             return
         self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         text = str(node.get_display_name().Text)
@@ -201,13 +202,19 @@ class DataChangeUI(object):
                 self.model.removeRow(i)
             i += 1
 
-    def _update_subscription_model(self, node, value, timestamp):
+    def _update_subscription_model(self, node, value, status_code, timestamp):
         i = 0
         while self.model.item(i):
             item = self.model.item(i)
             if item.data() == node:
                 it = self.model.item(i, 1)
                 it.setText(value)
+                if status_code == ua.StatusCodes.Good:
+                    it.setForeground(QBrush(QColor("green")))
+                elif status_code == ua.StatusCodes.Uncertain:
+                    it.setForeground(QBrush(QColor("yellow")))
+                else:  # StatusCode = Bad:
+                    it.setForeground(QBrush(QColor("red")))
                 it_ts = self.model.item(i, 2)
                 it_ts.setText(timestamp)
             i += 1
