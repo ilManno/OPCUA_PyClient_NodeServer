@@ -493,7 +493,7 @@ def main():
     client = Window()
     handler = QtHandler(client.ui.logTextEdit)
     logging.getLogger().addHandler(handler)
-    logging.getLogger("uaclient").setLevel(logging.INFO)
+    logging.getLogger(__name__).setLevel(logging.INFO)
     logging.getLogger("uawidgets").setLevel(logging.INFO)
     #logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua client library
    
