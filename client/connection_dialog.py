@@ -7,13 +7,10 @@ from uawidgets.utils import trycatchslot
 
 
 class ConnectionDialog(QDialog):
-    def __init__(self, parent, endpoints_dict, security_mode, security_policy, certificate_path, private_key_path):
+    def __init__(self, endpoints_dict, security_mode, security_policy, certificate_path, private_key_path):
         super().__init__()
         self.ui = Ui_ConnectionDialog()
         self.ui.setupUi(self)
-
-        self.uaclient = parent.uaclient
-        self.parent = parent
 
         self.endpoints_dict = endpoints_dict
         self.certificate_path = certificate_path
@@ -22,9 +19,10 @@ class ConnectionDialog(QDialog):
         self._init_fields(security_mode, security_policy)
 
         self.ui.modeComboBox.currentTextChanged.connect(self._change_policies)
-        self.ui.connectButton.clicked.connect(self.accept)
         self.ui.certificateButton.clicked.connect(self.select_certificate)
         self.ui.privateKeyButton.clicked.connect(self.select_private_key)
+        self.ui.connectButton.clicked.connect(self.accept)
+        self.ui.cancelButton.clicked.connect(self.reject)
 
     @trycatchslot
     def _init_fields(self, security_mode, security_policy):
@@ -64,11 +62,8 @@ class ConnectionDialog(QDialog):
             else:
                 self.ui.connectButton.setEnabled(False)
 
-    def get_selected_options(self):
-        return self.ui.modeComboBox.currentText(), self.ui.policyComboBox.currentText(), self.certificate_path, self.private_key_path
-
     def select_certificate(self):
-        path = QFileDialog.getOpenFileName(self, "Select certificate", self.ui.certificateLabel.text(), "Certificate (*.der)")[0]
+        path = QFileDialog.getOpenFileName(self, "Select certificate", self.certificate_path, "Certificate (*.der)")[0]
         if path:
             self.certificate_path = path
             self.ui.certificateLabel.setText(Path(path).name)
@@ -76,9 +71,12 @@ class ConnectionDialog(QDialog):
                 self.ui.connectButton.setEnabled(True)
 
     def select_private_key(self):
-        path = QFileDialog.getOpenFileName(self, "Select private key", self.ui.privateKeyLabel.text(), "Private key (*.pem)")[0]
+        path = QFileDialog.getOpenFileName(self, "Select private key", self.private_key_path, "Private key (*.pem)")[0]
         if path:
             self.private_key_path = path
             self.ui.privateKeyLabel.setText(Path(path).name)
             if self.certificate_path:
                 self.ui.connectButton.setEnabled(True)
+
+    def get_selected_options(self):
+        return self.ui.modeComboBox.currentText(), self.ui.policyComboBox.currentText(), self.certificate_path, self.private_key_path

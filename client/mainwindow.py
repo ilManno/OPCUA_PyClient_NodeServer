@@ -313,13 +313,7 @@ class Window(QMainWindow):
         # Load security settings
         self.uaclient.load_security_settings(uri)
         # Init Dialog with current settings
-        dia = ConnectionDialog(self,
-                               endpoints_dict,
-                               self.uaclient.security_mode,
-                               self.uaclient.security_policy,
-                               self.uaclient.certificate_path,
-                               self.uaclient.private_key_path)
-        # Load settings
+        dia = ConnectionDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path)
         ret = dia.exec_()
         if ret:
             self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
