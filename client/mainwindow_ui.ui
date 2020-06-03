@@ -182,7 +182,7 @@
      <item row="1" column="4">
       <widget class="QPushButton" name="optionsButton">
        <property name="text">
-        <string>Options</string>
+        <string>Options...</string>
        </property>
       </widget>
      </item>

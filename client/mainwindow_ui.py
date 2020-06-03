@@ -240,7 +240,7 @@ class Ui_MainWindow(object):
         self.menuView.setTitle(_translate("MainWindow", "View"))
         self.attrDockWidget.setWindowTitle(_translate("MainWindow", "Attributes"))
         self.attrRefreshButton.setText(_translate("MainWindow", "Refresh"))
-        self.optionsButton.setText(_translate("MainWindow", "Options"))
+        self.optionsButton.setText(_translate("MainWindow", "Options..."))
         self.connectButton.setText(_translate("MainWindow", "Connect"))
         self.subDockWidget.setWindowTitle(_translate("MainWindow", "Subscriptions"))
         self.refDockWidget.setWindowTitle(_translate("MainWindow", "References"))

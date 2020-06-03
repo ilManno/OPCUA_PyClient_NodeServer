@@ -44,7 +44,7 @@
     </widget>
    </item>
    <item row="4" column="2">
-    <widget class="QPushButton" name="closeButton">
+    <widget class="QPushButton" name="connectButton">
      <property name="text">
       <string>Connect</string>
      </property>

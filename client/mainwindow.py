@@ -258,8 +258,6 @@ class Window(QMainWindow):
         self.ui.addrComboBox.currentTextChanged.connect(self.clear_addresses)
         self.ui.addrComboBox.lineEdit().returnPressed.connect(self.handle_connect)
         self.ui.addrComboBox.setCompleter(None)
-        self.ui.addrComboBox.currentTextChanged.connect(self._uri_changed)
-        self._uri_changed(self.ui.addrComboBox.currentText())  # force update for current value at startup
 
         # Objects Tree
         self.tree_ui = TreeWidget(self.ui.treeView)
@@ -296,14 +294,12 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
-    def _uri_changed(self, uri):
-        self.uaclient.load_security_settings(uri)
-
     @trycatchslot
     def show_connection_dialog(self):
+        uri = self.ui.addrComboBox.currentText()
         try:
             # Query Endpoints
-            endpoints = self.uaclient.get_endpoints(self.ui.addrComboBox.currentText())
+            endpoints = self.uaclient.get_endpoints(uri)
         except Exception as ex:
             self.show_error(ex)
             raise
@@ -313,7 +309,9 @@ class Window(QMainWindow):
         for edp in endpoints:
             mode = edp.SecurityMode.name
             policy = edp.SecurityPolicyUri.split("#")[1]
-            endpoints_dict[mode] |= {policy}
+            endpoints_dict[mode].add(policy)
+        # Load security settings
+        self.uaclient.load_security_settings(uri)
         # Init Dialog with current settings
         dia = ConnectionDialog(self,
                                endpoints_dict,
@@ -325,6 +323,7 @@ class Window(QMainWindow):
         ret = dia.exec_()
         if ret:
             self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
+            self.uaclient.save_security_settings(uri)
             self.handle_connect()
 
     @trycatchslot
@@ -357,8 +356,11 @@ class Window(QMainWindow):
     def get_current_node(self, idx=None):
         return self.tree_ui.get_current_node(idx)
 
-    def get_uaclient(self):
-        return self.uaclient
+    def handle_connect(self):
+        if self.ui.connectButton.text() == "Connect":
+            self.connect()
+        else:
+            self.disconnect()
 
     @trycatchslot
     def connect(self):
@@ -366,6 +368,7 @@ class Window(QMainWindow):
         self.ui.connectButton.setEnabled(False)
         self.ui.connectButton.repaint()
         uri = self.ui.addrComboBox.currentText()
+        self.uaclient.load_security_settings(uri)
         try:
             self.uaclient.connect(uri)
         except Exception as ex:
@@ -420,12 +423,6 @@ class Window(QMainWindow):
             self.ui.connectButton.setText("Connect")
             self.ui.optionsButton.setEnabled(True)
             self.ui.addrComboBox.setEnabled(True)
-
-    def handle_connect(self):
-        if self.ui.connectButton.text() == "Connect":
-            self.connect()
-        else:
-            self.disconnect()
 
     def closeEvent(self, event):
         self.tree_ui.save_state()
