@@ -4,7 +4,7 @@ from datetime import datetime
 
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QItemSelection, QCoreApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QBrush, QColor
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QAction
 
 from opcua import ua, Node
 
@@ -36,7 +36,7 @@ class EventUI(object):
         self.window = window
         self.uaclient = uaclient
         self._handler = EventHandler()
-        self._subscribed_nodes = []  # FIXME: not really needed
+        self.subscribed_nodes = []
         self.model = QStandardItemModel()
         self.window.ui.evView.setModel(self.model)
         self.window.ui.actionSubscribeEvent.triggered.connect(self._subscribe)
@@ -62,7 +62,7 @@ class EventUI(object):
         return True
 
     def clear(self):
-        self._subscribed_nodes = []
+        self.subscribed_nodes = []
         self.model.clear()
 
     @trycatchslot
@@ -72,7 +72,7 @@ class EventUI(object):
             node = self.window.get_current_node()
             if node is None:
                 return
-        if node in self._subscribed_nodes:
+        if node in self.subscribed_nodes:
             logger.info("already subscribed to event for node: %s", node)
             return
         logger.info("Subscribing to events for %s", node)
@@ -83,14 +83,14 @@ class EventUI(object):
             self.window.show_error(ex)
             raise
         else:
-            self._subscribed_nodes.append(node)
+            self.subscribed_nodes.append(node)
 
     @trycatchslot
     def _unsubscribe(self):
         node = self.window.get_current_node()
         if node is None:
             return
-        self._subscribed_nodes.remove(node)
+        self.subscribed_nodes.remove(node)
         self.uaclient.unsubscribe_events(node)
 
     @trycatchslot
@@ -118,10 +118,11 @@ class DataChangeUI(object):
         self.window = window
         self.uaclient = uaclient
         self._subhandler = DataChangeHandler()
-        self._subscribed_nodes = []
+        self.subscribed_nodes = []
         self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         self.window.ui.subView.setModel(self.model)
-        self.window.ui.subView.horizontalHeader().setSectionResizeMode(1)
+        self.window.ui.subView.setColumnWidth(1, 150)
 
         self.window.ui.actionSubscribeDataChange.triggered.connect(self._subscribe)
         self.window.ui.actionUnsubscribeDataChange.triggered.connect(self._unsubscribe)
@@ -137,6 +138,14 @@ class DataChangeUI(object):
         self.model.canDropMimeData = self.canDropMimeData
         self.model.dropMimeData = self.dropMimeData
 
+        # Context menu
+        self.window.ui.subView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.window.ui.subView.customContextMenuRequested.connect(self.showContextMenu)
+        unsubscribeaction = QAction("Unsubscribe", self.model)
+        unsubscribeaction.triggered.connect(self._unsubscribe_context)
+        self._contextMenu = QMenu()
+        self._contextMenu.addAction(unsubscribeaction)
+
     def canDropMimeData(self, mdata, action, row, column, parent):
         return True
 
@@ -145,9 +154,25 @@ class DataChangeUI(object):
         self._subscribe(node)
         return True
 
+    def showContextMenu(self, position):
+        item = self.get_current_item()
+        if item:
+            self._contextMenu.exec_(self.window.ui.subView.viewport().mapToGlobal(position))
+
+    def get_current_item(self, col_idx=0):
+        idx = self.window.ui.subView.currentIndex()
+        idx = idx.siblingAtColumn(col_idx)
+        return self.model.itemFromIndex(idx)
+
+    def _unsubscribe_context(self):
+        it = self.get_current_item()
+        if it:
+            self._unsubscribe(it.data())
+
     def clear(self):
-        self._subscribed_nodes = []
-        self.model.clear()
+        self.subscribed_nodes = []
+        # remove all rows but not header!!
+        self.model.removeRows(0, self.model.rowCount())
 
     def show_error(self, *args):
         self.window.show_error(*args)
@@ -158,10 +183,9 @@ class DataChangeUI(object):
             node = self.window.get_current_node()
             if node is None:
                 return
-        if node in self._subscribed_nodes:
+        if node in self.subscribed_nodes:
             logger.warning("already subscribed to node: %s ", node)
             return
-        self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         text = str(node.get_display_name().Text)
         if node.get_parent().get_type_definition() == ua.FourByteNodeId(1002, 1):
             icon = QIcon("uawidgets/icons/temp_sensor.svg")
@@ -178,7 +202,7 @@ class DataChangeUI(object):
         row = [QStandardItem(icon, text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
-        self._subscribed_nodes.append(node)
+        self.subscribed_nodes.append(node)
         self.window.ui.subDockWidget.raise_()
         try:
             self.uaclient.subscribe_datachange(node, self._subhandler)
@@ -189,12 +213,13 @@ class DataChangeUI(object):
             raise
 
     @trycatchslot
-    def _unsubscribe(self):
-        node = self.window.get_current_node()
+    def _unsubscribe(self, node=None):
+        if not isinstance(node, Node):
+            node = self.window.get_current_node()
         if node is None:
             return
         self.uaclient.unsubscribe_datachange(node)
-        self._subscribed_nodes.remove(node)
+        self.subscribed_nodes.remove(node)
         i = 0
         while self.model.item(i):
             item = self.model.item(i)
@@ -231,14 +256,12 @@ class Window(QMainWindow):
         # remove dock titlebar for addressbar
         w = QWidget()
         self.ui.addrDockWidget.setTitleBarWidget(w)
-        # tabify some docks
-        self.tabifyDockWidget(self.ui.evDockWidget, self.ui.subDockWidget)
-        self.tabifyDockWidget(self.ui.subDockWidget, self.ui.refDockWidget)
         # add view actions in menu bar
-        self.ui.menuView.addAction(self.ui.attrDockWidget.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.treeDockWidget.toggleViewAction())
         self.ui.menuView.addAction(self.ui.subDockWidget.toggleViewAction())
-        self.ui.menuView.addAction(self.ui.refDockWidget.toggleViewAction())
         self.ui.menuView.addAction(self.ui.evDockWidget.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.attrDockWidget.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.refDockWidget.toggleViewAction())
         self.ui.menuView.addAction(self.ui.logDockWidget.toggleViewAction())
 
         # we only show statusbar in case of errors
@@ -270,7 +293,6 @@ class Window(QMainWindow):
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
         self.setup_context_menu_tree()
-        self.ui.treeView.selectionModel().currentChanged.connect(self._update_actions_state)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_refs)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
 
@@ -278,6 +300,7 @@ class Window(QMainWindow):
         self.ui.actionCopyPath.triggered.connect(self.tree_ui.copy_path)
         self.ui.actionCopyNodeId.triggered.connect(self.tree_ui.copy_nodeid)
         self.ui.actionCall.triggered.connect(self.call_method)
+        self.ui.actionReload.triggered.connect(self.tree_ui.reload_current)
 
         # References Widget
         self.refs_ui = RefsWidget(self.ui.refView)
@@ -287,7 +310,10 @@ class Window(QMainWindow):
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
         self.datachange_ui = DataChangeUI(self, self.uaclient)
+        self._contextMenu.addSeparator()
         self.event_ui = EventUI(self, self.uaclient)
+        self._contextMenu.addSeparator()
+        self._contextMenu.addAction(self.ui.actionReload)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
 
         # Connection Buttons
@@ -417,8 +443,8 @@ class Window(QMainWindow):
         finally:
             self.save_current_node()
             self.tree_ui.clear()
-            self.refs_ui.clear()
             self.attrs_ui.clear()
+            self.refs_ui.clear()
             self.datachange_ui.clear()
             self.event_ui.clear()
             self.ui.connectButton.setText("Connect")
@@ -437,7 +463,7 @@ class Window(QMainWindow):
         event.accept()
 
     def save_current_node(self):
-        current_node = self.tree_ui.get_current_node()
+        current_node = self.get_current_node()
         if current_node:
             mysettings = self.settings.value("current_node", None)
             if mysettings is None:
@@ -469,18 +495,26 @@ class Window(QMainWindow):
     def addAction(self, action):
         self._contextMenu.addAction(action)
 
-    @trycatchslot
-    def _update_actions_state(self, current):
-        node = self.get_current_node(current)
-        self.ui.actionCall.setEnabled(False)
-        if node:
-            if node.get_node_class() == ua.NodeClass.Method:
-                self.ui.actionCall.setEnabled(True)
-
     def _show_context_menu_tree(self, position):
-        node = self.tree_ui.get_current_node()
+        node = self.get_current_node()
         if node:
+            self._update_actions_state(node)
             self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
+
+    @trycatchslot
+    def _update_actions_state(self, node):
+        # Method action
+        self.ui.actionCall.setEnabled(node.get_node_class() == ua.NodeClass.Method)
+        # DataChange actions
+        if node.get_node_class() != ua.NodeClass.Variable:
+            self.ui.actionSubscribeDataChange.setEnabled(False)
+            self.ui.actionUnsubscribeDataChange.setEnabled(False)
+        else:
+            self.ui.actionSubscribeDataChange.setEnabled(node not in self.datachange_ui.subscribed_nodes)
+            self.ui.actionUnsubscribeDataChange.setEnabled(not self.ui.actionSubscribeDataChange.isEnabled())
+        # Event actions
+        self.ui.actionSubscribeEvent.setEnabled(node not in self.event_ui.subscribed_nodes)
+        self.ui.actionUnsubscribeEvents.setEnabled(not self.ui.actionSubscribeEvent.isEnabled())
 
     def call_method(self):
         node = self.get_current_node()

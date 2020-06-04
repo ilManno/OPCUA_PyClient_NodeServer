@@ -29,8 +29,6 @@ class RefsWidget(QObject):
         state = self.settings.value("WindowState/refs_widget_state", None)
         if state is not None:
             self.view.horizontalHeader().restoreState(state)
-        self.view.horizontalHeader().setSectionResizeMode(0)
-        self.view.horizontalHeader().setStretchLastSection(True)
         self.node = None
 
         self.reloadAction = QAction("Reload", self.model)

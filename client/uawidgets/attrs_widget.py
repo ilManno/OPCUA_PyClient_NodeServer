@@ -58,8 +58,8 @@ class AttrsWidget(QObject):
             self.view.header().restoreState(state)
         self.view.setModel(self.model)
         self.current_node = None
-        self.view.header().setSectionResizeMode(0)
-        self.view.header().setStretchLastSection(True)
+        self.view.setColumnWidth(0, 150)
+        self.view.setColumnWidth(1, 150)
         self.view.expanded.connect(self._item_expanded)
         self.view.collapsed.connect(self._item_collapsed)
         self.view.setEditTriggers(QAbstractItemView.DoubleClicked)
@@ -98,7 +98,7 @@ class AttrsWidget(QObject):
         idx = idx.siblingAtColumn(col_idx)
         return self.model.itemFromIndex(idx)
 
-    def _copy_value(self, position):
+    def _copy_value(self):
         it = self.get_current_item(1)
         if it:
             QApplication.clipboard().setText(it.text())

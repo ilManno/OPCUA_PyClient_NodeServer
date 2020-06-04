@@ -20,16 +20,11 @@ class TreeWidget(QObject):
 
         #self.view.setUniformRowHeights(True)
         self.model.setHorizontalHeaderLabels(['DisplayName', "BrowseName", 'NodeId'])
-        self.view.header().setSectionResizeMode(0)
-        self.view.header().setStretchLastSection(True)
-        self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.view.setColumnWidth(0, 200)
         self.settings = QSettings()
         state = self.settings.value("tree_widget_state", None)
         if state is not None:
             self.view.header().restoreState(state)
-
-        self.actionReload = QAction("Reload", self)
-        self.actionReload.triggered.connect(self.reload_current)
 
     def save_state(self):
         self.settings.setValue("tree_widget_state", self.view.header().saveState())
