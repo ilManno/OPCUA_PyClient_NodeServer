@@ -15,10 +15,10 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>uawidgets/icons/client.svg</normaloff>uawidgets/icons/client.svg</iconset>
+    <normaloff>icons/client.svg</normaloff>icons/client.svg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_7">
+   <layout class="QGridLayout" name="gridLayout_2">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -32,89 +32,69 @@
      <number>0</number>
     </property>
     <item row="0" column="0">
-     <widget class="QSplitter" name="splitter">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
-      <widget class="QDockWidget" name="subDockWidget">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="features">
-        <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
-       </property>
-       <property name="windowTitle">
-        <string>Subscriptions</string>
-       </property>
-       <widget class="QWidget" name="dockWidgetContents_7">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+      <widget class="QWidget" name="scadaTab">
+       <attribute name="title">
+        <string>SCADA</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <property name="leftMargin">
+         <number>0</number>
         </property>
-        <layout class="QGridLayout" name="gridLayout_3">
-         <item row="0" column="0">
-          <widget class="QTableView" name="subView">
-           <property name="acceptDrops">
-            <bool>true</bool>
-           </property>
-           <property name="editTriggers">
-            <set>QAbstractItemView::NoEditTriggers</set>
-           </property>
-           <property name="dragDropOverwriteMode">
-            <bool>false</bool>
-           </property>
-           <property name="dragDropMode">
-            <enum>QAbstractItemView::DropOnly</enum>
-           </property>
-           <attribute name="horizontalHeaderStretchLastSection">
-            <bool>true</bool>
-           </attribute>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QListWidget" name="scadaWidget"/>
+        </item>
+       </layout>
       </widget>
-      <widget class="QDockWidget" name="evDockWidget">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="features">
-        <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
-       </property>
-       <property name="windowTitle">
-        <string>Events</string>
-       </property>
-       <widget class="QWidget" name="dockWidgetContents_8">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+      <widget class="QWidget" name="subTab">
+       <attribute name="title">
+        <string>Subscriptions</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_7">
+        <property name="leftMargin">
+         <number>0</number>
         </property>
-        <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0">
-          <widget class="QListView" name="evView">
-           <property name="acceptDrops">
-            <bool>true</bool>
-           </property>
-           <property name="editTriggers">
-            <set>QAbstractItemView::NoEditTriggers</set>
-           </property>
-           <property name="dragDropMode">
-            <enum>QAbstractItemView::DropOnly</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QTableView" name="subView">
+          <property name="acceptDrops">
+           <bool>true</bool>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="dragDropOverwriteMode">
+           <bool>false</bool>
+          </property>
+          <property name="dragDropMode">
+           <enum>QAbstractItemView::DropOnly</enum>
+          </property>
+          <attribute name="horizontalHeaderStretchLastSection">
+           <bool>true</bool>
+          </attribute>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -384,22 +364,6 @@
    </property>
    <property name="toolTip">
     <string>Unsubscribe to DataChange for current node</string>
-   </property>
-  </action>
-  <action name="actionSubscribeEvent">
-   <property name="text">
-    <string>Subscribe to Events</string>
-   </property>
-   <property name="toolTip">
-    <string>Subscribe to events from selected node</string>
-   </property>
-  </action>
-  <action name="actionUnsubscribeEvents">
-   <property name="text">
-    <string>Unsubscribe to Events</string>
-   </property>
-   <property name="toolTip">
-    <string>Unsubscribe to Events from current node</string>
    </property>
   </action>
   <action name="actionCopyPath">

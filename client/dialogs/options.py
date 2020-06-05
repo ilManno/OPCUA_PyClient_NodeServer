@@ -2,14 +2,14 @@ from pathlib import Path
 
 from PyQt5.QtWidgets import QDialog, QFileDialog
 
-from connection_ui import Ui_ConnectionDialog
-from uawidgets.utils import trycatchslot
+from dialogs.options_ui import Ui_OptionsDialog
+from utils import trycatchslot
 
 
-class ConnectionDialog(QDialog):
+class OptionsDialog(QDialog):
     def __init__(self, endpoints_dict, security_mode, security_policy, certificate_path, private_key_path):
         super().__init__()
-        self.ui = Ui_ConnectionDialog()
+        self.ui = Ui_OptionsDialog()
         self.ui.setupUi(self)
 
         self.endpoints_dict = endpoints_dict

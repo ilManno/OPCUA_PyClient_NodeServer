@@ -3,99 +3,25 @@ import sys
 from datetime import datetime
 
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QItemSelection, QCoreApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QBrush, QColor
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QAction
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QBrush, QColor, QPixmap
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QAction, QListWidgetItem
 
 from opcua import ua, Node
 
-from uawidgets.attrs_widget import AttrsWidget
-from uawidgets.call_method_dialog import CallMethodDialog
-from uawidgets.logger import QtHandler
-from uawidgets.refs_widget import RefsWidget
-from uawidgets.tree_widget import TreeWidget
-from uawidgets.utils import trycatchslot
+from widgets.attributes import AttrsWidget
+from dialogs.call_method import CallMethodDialog
+from logger import QtHandler
+from widgets.card import Ui_CardWidget
+from widgets.references import RefsWidget
+from widgets.tree import TreeWidget
+from utils import trycatchslot
 
-from connection_dialog import ConnectionDialog
+from dialogs.options import OptionsDialog
 from mainwindow_ui import Ui_MainWindow
-from uaclient import UaClient
+from client import UaClient
 
 
 logger = logging.getLogger(__name__)
-
-
-class EventHandler(QObject):
-    event_fired = pyqtSignal(object)
-
-    def event_notification(self, event):
-        self.event_fired.emit(event)
-
-
-class EventUI(object):
-
-    def __init__(self, window, uaclient):
-        self.window = window
-        self.uaclient = uaclient
-        self._handler = EventHandler()
-        self.subscribed_nodes = []
-        self.model = QStandardItemModel()
-        self.window.ui.evView.setModel(self.model)
-        self.window.ui.actionSubscribeEvent.triggered.connect(self._subscribe)
-        self.window.ui.actionUnsubscribeEvents.triggered.connect(self._unsubscribe)
-        # context menu
-        self.window.addAction(self.window.ui.actionSubscribeEvent)
-        self.window.addAction(self.window.ui.actionUnsubscribeEvents)
-        self._handler.event_fired.connect(self._update_event_model, type=Qt.QueuedConnection)
-
-        # accept drops
-        self.model.canDropMimeData = self.canDropMimeData
-        self.model.dropMimeData = self.dropMimeData
-
-    def show_error(self, *args):
-        self.window.show_error(*args)
-
-    def canDropMimeData(self, mdata, action, row, column, parent):
-        return True
-
-    def dropMimeData(self, mdata, action, row, column, parent):
-        node = self.uaclient.client.get_node(mdata.text())
-        self._subscribe(node)
-        return True
-
-    def clear(self):
-        self.subscribed_nodes = []
-        self.model.clear()
-
-    @trycatchslot
-    def _subscribe(self, node=None):
-        logger.info("Subscribing to %s", node)
-        if not node:
-            node = self.window.get_current_node()
-            if node is None:
-                return
-        if node in self.subscribed_nodes:
-            logger.info("already subscribed to event for node: %s", node)
-            return
-        logger.info("Subscribing to events for %s", node)
-        self.window.ui.evDockWidget.raise_()
-        try:
-            self.uaclient.subscribe_events(node, self._handler)
-        except Exception as ex:
-            self.window.show_error(ex)
-            raise
-        else:
-            self.subscribed_nodes.append(node)
-
-    @trycatchslot
-    def _unsubscribe(self):
-        node = self.window.get_current_node()
-        if node is None:
-            return
-        self.subscribed_nodes.remove(node)
-        self.uaclient.unsubscribe_events(node)
-
-    @trycatchslot
-    def _update_event_model(self, event):
-        self.model.appendRow([QStandardItem(str(event))])
 
 
 class DataChangeHandler(QObject):
@@ -188,22 +114,21 @@ class DataChangeUI(object):
             return
         text = str(node.get_display_name().Text)
         if node.get_parent().get_type_definition() == ua.FourByteNodeId(1002, 1):
-            icon = QIcon("uawidgets/icons/temp_sensor.svg")
+            icon = QIcon("icons/temp_sensor.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1003, 1):
-            icon = QIcon("uawidgets/icons/flow_sensor.svg")
+            icon = QIcon("icons/flow_sensor.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1006, 1):
-            icon = QIcon("uawidgets/icons/boiler.svg")
+            icon = QIcon("icons/boiler.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1007, 1):
-            icon = QIcon("uawidgets/icons/motor.svg")
+            icon = QIcon("icons/motor.svg")
         elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1008, 1):
-            icon = QIcon("uawidgets/icons/valve.svg")
+            icon = QIcon("icons/valve.svg")
         else:
-            icon = QIcon("uawidgets/icons/object.svg")
+            icon = QIcon("icons/object.svg")
         row = [QStandardItem(icon, text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
         self.subscribed_nodes.append(node)
-        self.window.ui.subDockWidget.raise_()
         try:
             self.uaclient.subscribe_datachange(node, self._subhandler)
         except Exception as ex:
@@ -258,8 +183,6 @@ class Window(QMainWindow):
         self.ui.addrDockWidget.setTitleBarWidget(w)
         # add view actions in menu bar
         self.ui.menuView.addAction(self.ui.treeDockWidget.toggleViewAction())
-        self.ui.menuView.addAction(self.ui.subDockWidget.toggleViewAction())
-        self.ui.menuView.addAction(self.ui.evDockWidget.toggleViewAction())
         self.ui.menuView.addAction(self.ui.attrDockWidget.toggleViewAction())
         self.ui.menuView.addAction(self.ui.refDockWidget.toggleViewAction())
         self.ui.menuView.addAction(self.ui.logDockWidget.toggleViewAction())
@@ -271,6 +194,7 @@ class Window(QMainWindow):
         QCoreApplication.setOrganizationName("UniCT")
         QCoreApplication.setApplicationName("OpcUaClient")
         self.settings = QSettings()
+        self.settings.clear()
         self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4334/UA/NodeServer",
                                                                   "Clear all..."])
         print("ADR", self._address_list)
@@ -282,7 +206,7 @@ class Window(QMainWindow):
         address_list_len = len(self._address_list)
         for index in range(address_list_len):
             self.ui.addrComboBox.insertItem(index, self._address_list[index])
-            icon = "uawidgets/icons/server.svg" if index < address_list_len - 1 else "uawidgets/icons/x.svg"
+            icon = "icons/server.svg" if index < address_list_len - 1 else "icons/x.svg"
             self.ui.addrComboBox.setItemIcon(index, QIcon(icon))
 
         self.ui.addrComboBox.currentTextChanged.connect(self.clear_addresses)
@@ -311,15 +235,13 @@ class Window(QMainWindow):
         self.attrs_ui.error.connect(self.show_error)
         self.datachange_ui = DataChangeUI(self, self.uaclient)
         self._contextMenu.addSeparator()
-        self.event_ui = EventUI(self, self.uaclient)
-        self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionReload)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
 
         # Connection Buttons
         self.ui.connectButton.clicked.connect(self.handle_connect)
         # self.ui.treeView.expanded.connect(self._fit)
-        self.ui.optionsButton.clicked.connect(self.show_connection_dialog)
+        self.ui.optionsButton.clicked.connect(self.show_options_dialog)
 
         # Main Window
         self.resize(int(self.settings.value("main_window_width", 800)), int(self.settings.value("main_window_height", 600)))
@@ -327,8 +249,19 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
+        #self.cardWidget = QWidget()
+        #self.cardUi = Ui_CardWidget()
+        #self.cardUi.setupUi(self.cardWidget)
+
+        #self.cardUi.label.setPixmap(QPixmap("icons/server.svg"))
+        #self.cardUi.listWidget.addItem("Test")
+
+        #self.item = QListWidgetItem()
+        #self.ui.scadaWidget.addItem(self.item)
+        #self.ui.scadaWidget.setItemWidget(self.item, self.cardWidget)
+
     @trycatchslot
-    def show_connection_dialog(self):
+    def show_options_dialog(self):
         uri = self.ui.addrComboBox.currentText()
         try:
             # Query Endpoints
@@ -346,7 +279,7 @@ class Window(QMainWindow):
         # Load security settings
         self.uaclient.load_security_settings(uri)
         # Init Dialog with current settings
-        dia = ConnectionDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path)
+        dia = OptionsDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path)
         ret = dia.exec_()
         if ret:
             self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
@@ -424,7 +357,7 @@ class Window(QMainWindow):
         address_list_len = len(self._address_list)
         for index in range(address_list_len):
             self.ui.addrComboBox.insertItem(index, self._address_list[index])
-            icon = "uawidgets/icons/server.svg" if index < address_list_len - 1 else "uawidgets/icons/x.svg"
+            icon = "icons/server.svg" if index < address_list_len - 1 else "icons/x.svg"
             self.ui.addrComboBox.setItemIcon(index, QIcon(icon))
 
     def clear_addresses(self, text):
@@ -446,7 +379,6 @@ class Window(QMainWindow):
             self.attrs_ui.clear()
             self.refs_ui.clear()
             self.datachange_ui.clear()
-            self.event_ui.clear()
             self.ui.connectButton.setText("Connect")
             self.ui.optionsButton.setEnabled(True)
             self.ui.addrComboBox.setEnabled(True)
@@ -512,9 +444,6 @@ class Window(QMainWindow):
         else:
             self.ui.actionSubscribeDataChange.setEnabled(node not in self.datachange_ui.subscribed_nodes)
             self.ui.actionUnsubscribeDataChange.setEnabled(not self.ui.actionSubscribeDataChange.isEnabled())
-        # Event actions
-        self.ui.actionSubscribeEvent.setEnabled(node not in self.event_ui.subscribed_nodes)
-        self.ui.actionUnsubscribeEvents.setEnabled(not self.ui.actionSubscribeEvent.isEnabled())
 
     def call_method(self):
         node = self.get_current_node()

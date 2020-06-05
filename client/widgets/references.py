@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMenu, QAction, QAbstractItemView
 
 from opcua import ua, Node
 
-from uawidgets.utils import trycatchslot
+from utils import trycatchslot
 
 
 logger = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ConnectionDialog</class>
- <widget class="QDialog" name="ConnectionDialog">
+ <class>OptionsDialog</class>
+ <widget class="QDialog" name="OptionsDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>uawidgets/icons/property.svg</normaloff>uawidgets/icons/property.svg</iconset>
+    <normaloff>icons/property.svg</normaloff>icons/property.svg</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="1">
