@@ -194,7 +194,6 @@ class Window(QMainWindow):
         QCoreApplication.setOrganizationName("UniCT")
         QCoreApplication.setApplicationName("OpcUaClient")
         self.settings = QSettings()
-        self.settings.clear()
         self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4334/UA/NodeServer",
                                                                   "Clear all..."])
         print("ADR", self._address_list)
@@ -249,16 +248,56 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
-        #self.cardWidget = QWidget()
-        #self.cardUi = Ui_CardWidget()
-        #self.cardUi.setupUi(self.cardWidget)
+    def show_cards(self, custom_objects):
+        for obj, custom_type in custom_objects:
+            cardWidget = QWidget()
+            cardUi = Ui_CardWidget()
+            cardUi.setupUi(cardWidget)
 
-        #self.cardUi.label.setPixmap(QPixmap("icons/server.svg"))
-        #self.cardUi.listWidget.addItem("Test")
+            model = QStandardItemModel()
+            cardUi.variablesView.setModel(model)
 
-        #self.item = QListWidgetItem()
-        #self.ui.scadaWidget.addItem(self.item)
-        #self.ui.scadaWidget.setItemWidget(self.item, self.cardWidget)
+            if custom_type == "BoilerType":
+                cardUi.icon.setPixmap(QPixmap("icons/boiler.svg").scaled(80, 80))
+            elif custom_type == "MotorType":
+                cardUi.icon.setPixmap(QPixmap("icons/motor.svg").scaled(80, 80))
+            elif custom_type == "ValveType":
+                cardUi.icon.setPixmap(QPixmap("icons/valve.svg").scaled(80, 80))
+            elif custom_type == "TempSensorType":
+                cardUi.icon.setPixmap(QPixmap("icons/temp_sensor.svg").scaled(80, 80))
+            elif custom_type == "LevelIndicatorType":
+                cardUi.icon.setPixmap(QPixmap("icons/flow_sensor.svg").scaled(80, 80))
+
+            variables = obj.get_children()
+
+            for var in variables:
+                if var.get_node_class() == ua.NodeClass.Variable:
+                    if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.PropertyType):
+                        # Read
+                        print("Property")
+                        cardUi.variablesView.addItem(var.get_display_name().to_string())
+                        cardUi.variablesView.addItem(str(var.get_value()))
+                    else:
+                        print("Data Value")
+                        # Subscribe
+                        name = var.get_display_name().to_string()
+                        value = str(var.get_value())
+                        row = [QStandardItem(name), QStandardItem(value)]
+                        row[0].setData(var)
+                        model.appendRow(row)
+                        #self.datachange_ui.subscribed_nodes.append(var)
+                        #try:
+                            #self.uaclient.subscribe_datachange(var, self.datachange_ui._subhandler)
+                        #except Exception as ex:
+                            #self.show_error(ex)
+                            #idx = self.model.indexFromItem(row[0])
+                            #self.model.takeRow(idx.row())
+                            #raise
+
+            item = QListWidgetItem()
+            item.setSizeHint(cardWidget.sizeHint())
+            self.ui.scadaWidget.addItem(item)
+            self.ui.scadaWidget.setItemWidget(item, cardWidget)
 
     @trycatchslot
     def show_options_dialog(self):
@@ -345,6 +384,8 @@ class Window(QMainWindow):
         self.ui.connectButton.setEnabled(True)
         self.ui.optionsButton.setEnabled(False)
         self.ui.addrComboBox.setEnabled(False)
+        custom_objects = self.uaclient.get_custom_objects()
+        self.show_cards(custom_objects)
 
     def _update_address_list(self, uri):
         if uri in self._address_list:
@@ -369,6 +410,7 @@ class Window(QMainWindow):
 
     def disconnect(self):
         try:
+            self.uaclient.delete_subscription()
             self.uaclient.disconnect()
         except Exception as ex:
             self.show_error(ex)
@@ -379,6 +421,7 @@ class Window(QMainWindow):
             self.attrs_ui.clear()
             self.refs_ui.clear()
             self.datachange_ui.clear()
+            self.ui.scadaWidget.clear()
             self.ui.connectButton.setText("Connect")
             self.ui.optionsButton.setEnabled(True)
             self.ui.addrComboBox.setEnabled(True)
@@ -458,7 +501,7 @@ def main():
     logging.getLogger().addHandler(handler)
     logging.getLogger(__name__).setLevel(logging.INFO)
     logging.getLogger("uawidgets").setLevel(logging.INFO)
-    #logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua client library
+    # logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua client library
    
     client.show()
     sys.exit(app.exec_())

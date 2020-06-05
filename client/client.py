@@ -10,10 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class UaClient:
-    """
-    OPC-Ua client specialized for the need of GUI client
-    return exactly what GUI needs, no customization possible
-    """
 
     def __init__(self):
         self.settings = QSettings()
@@ -27,6 +23,8 @@ class UaClient:
         self.security_policy = "None"
         self.certificate_path = ""
         self.private_key_path = ""
+        self.known_custom_types = ["BoilerType", "MotorType", "ValveType",
+                                   "TempSensorType", "LevelIndicatorType"]
 
     def _reset(self):
         self.client = None
@@ -84,7 +82,9 @@ class UaClient:
                 self.private_key_path,
                 mode=getattr(ua.MessageSecurityMode, self.security_mode)
             )
-        self.client.application_uri = "urn:example.org:FreeOpcUa:python-opcua"
+            # self.client.secure_channel_timeout = 10000
+            # self.client.session_timeout = 10000
+        self.client.application_uri = "urn:example.org:OpcUa:python-client"
         self.client.connect()
         self._connected = True
         self.save_security_settings(uri)
@@ -108,13 +108,28 @@ class UaClient:
     def unsubscribe_datachange(self, node):
         self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
 
-    def subscribe_events(self, node, handler):
-        if not self._event_sub:
-            print("Subscribing with handler: ", handler, dir(handler))
-            self._event_sub = self.client.create_subscription(500, handler)
-        handle = self._event_sub.subscribe_events(node)
-        self._subs_ev[node.nodeid] = handle
-        return handle
+    def delete_subscription(self):
+        if self._datachange_sub:
+            for handle in self._subs_dc.values():
+                self._datachange_sub.unsubscribe(handle)
+            self._datachange_sub.delete()
+            print("Subscription correctly deleted")
 
-    def unsubscribe_events(self, node):
-        self._event_sub.unsubscribe(self._subs_ev[node.nodeid])
+    def get_custom_objects(self):
+        custom_objects = []
+        objects = self.client.get_objects_node().get_children()
+        for obj in objects:
+            if obj.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.FolderType):
+                folder_name = obj.get_display_name().to_string()
+                if folder_name == "Actuators" or folder_name == "Sensors":
+                    devices = obj.get_children()
+                    for dev in devices:
+                        references = dev.get_children_descriptions(refs=ua.ObjectIds.References)
+                        for ref in references:
+                            typename = ua.ObjectIdNames[ref.ReferenceTypeId.Identifier]
+                            if typename == "HasTypeDefinition":
+                                custom_type = ref.DisplayName.to_string()
+                                if custom_type in self.known_custom_types:
+                                    custom_objects.append((dev, custom_type))
+                                break
+        return custom_objects

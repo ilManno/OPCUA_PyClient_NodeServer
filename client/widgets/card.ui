@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>513</width>
-    <height>208</height>
+    <width>463</width>
+    <height>152</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
-     <widget class="QLabel" name="label"/>
-     <widget class="QListWidget" name="listWidget"/>
+     <widget class="QLabel" name="icon"/>
+     <widget class="QListView" name="variablesView"/>
     </widget>
    </item>
   </layout>

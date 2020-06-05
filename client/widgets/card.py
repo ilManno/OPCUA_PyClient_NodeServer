@@ -13,16 +13,16 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_CardWidget(object):
     def setupUi(self, CardWidget):
         CardWidget.setObjectName("CardWidget")
-        CardWidget.resize(513, 208)
+        CardWidget.resize(463, 152)
         self.gridLayout = QtWidgets.QGridLayout(CardWidget)
         self.gridLayout.setObjectName("gridLayout")
         self.splitter = QtWidgets.QSplitter(CardWidget)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
-        self.label = QtWidgets.QLabel(self.splitter)
-        self.label.setObjectName("label")
-        self.listWidget = QtWidgets.QListWidget(self.splitter)
-        self.listWidget.setObjectName("listWidget")
+        self.icon = QtWidgets.QLabel(self.splitter)
+        self.icon.setObjectName("icon")
+        self.variablesView = QtWidgets.QListView(self.splitter)
+        self.variablesView.setObjectName("variablesView")
         self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
 
         self.retranslateUi(CardWidget)
