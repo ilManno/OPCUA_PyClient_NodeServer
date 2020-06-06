@@ -1,19 +1,21 @@
 import logging
 import sys
-from datetime import datetime
 
-from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QItemSelection, QCoreApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QBrush, QColor, QPixmap
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QAction, QListWidgetItem
+from PyQt5.QtCore import QTimer, Qt, QSettings, QItemSelection, QCoreApplication
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QListWidgetItem
 
-from opcua import ua, Node
+from opcua import ua
 
 from widgets.attributes import AttrsWidget
 from dialogs.call_method import CallMethodDialog
 from logger import QtHandler
+from widgets.variables import DataChangeCardUI
+from widgets.subscriptions import DataChangeUI
 from widgets.card import Ui_CardWidget
 from widgets.references import RefsWidget
 from widgets.tree import TreeWidget
+from widgets.sub_handler import DataChangeHandler
 from utils import trycatchslot
 
 from dialogs.options import OptionsDialog
@@ -22,152 +24,6 @@ from client import UaClient
 
 
 logger = logging.getLogger(__name__)
-
-
-class DataChangeHandler(QObject):
-    data_change_fired = pyqtSignal(object, str, int, str)
-
-    def datachange_notification(self, node, val, data):
-        status_code = data.monitored_item.Value.StatusCode.value
-        if data.monitored_item.Value.SourceTimestamp:
-            timestamp = data.monitored_item.Value.SourceTimestamp.isoformat()
-        elif data.monitored_item.Value.ServerTimestamp:
-            timestamp = data.monitored_item.Value.ServerTimestamp.isoformat()
-        else:
-            timestamp = datetime.now().isoformat()
-        self.data_change_fired.emit(node, str(val), status_code, timestamp)
-
-
-class DataChangeUI(object):
-
-    def __init__(self, window, uaclient):
-        self.window = window
-        self.uaclient = uaclient
-        self._subhandler = DataChangeHandler()
-        self.subscribed_nodes = []
-        self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
-        self.window.ui.subView.setModel(self.model)
-        self.window.ui.subView.setColumnWidth(1, 150)
-
-        self.window.ui.actionSubscribeDataChange.triggered.connect(self._subscribe)
-        self.window.ui.actionUnsubscribeDataChange.triggered.connect(self._unsubscribe)
-
-        # populate contextual menu
-        self.window.addAction(self.window.ui.actionSubscribeDataChange)
-        self.window.addAction(self.window.ui.actionUnsubscribeDataChange)
-
-        # handle subscriptions
-        self._subhandler.data_change_fired.connect(self._update_subscription_model, type=Qt.QueuedConnection)
-        
-        # accept drops
-        self.model.canDropMimeData = self.canDropMimeData
-        self.model.dropMimeData = self.dropMimeData
-
-        # Context menu
-        self.window.ui.subView.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.window.ui.subView.customContextMenuRequested.connect(self.showContextMenu)
-        unsubscribeaction = QAction("Unsubscribe", self.model)
-        unsubscribeaction.triggered.connect(self._unsubscribe_context)
-        self._contextMenu = QMenu()
-        self._contextMenu.addAction(unsubscribeaction)
-
-    def canDropMimeData(self, mdata, action, row, column, parent):
-        return True
-
-    def dropMimeData(self, mdata, action, row, column, parent):
-        node = self.uaclient.client.get_node(mdata.text())
-        self._subscribe(node)
-        return True
-
-    def showContextMenu(self, position):
-        item = self.get_current_item()
-        if item:
-            self._contextMenu.exec_(self.window.ui.subView.viewport().mapToGlobal(position))
-
-    def get_current_item(self, col_idx=0):
-        idx = self.window.ui.subView.currentIndex()
-        idx = idx.siblingAtColumn(col_idx)
-        return self.model.itemFromIndex(idx)
-
-    def _unsubscribe_context(self):
-        it = self.get_current_item()
-        if it:
-            self._unsubscribe(it.data())
-
-    def clear(self):
-        self.subscribed_nodes = []
-        # remove all rows but not header!!
-        self.model.removeRows(0, self.model.rowCount())
-
-    def show_error(self, *args):
-        self.window.show_error(*args)
-
-    @trycatchslot
-    def _subscribe(self, node=None):
-        if not isinstance(node, Node):
-            node = self.window.get_current_node()
-            if node is None:
-                return
-        if node in self.subscribed_nodes:
-            logger.warning("already subscribed to node: %s ", node)
-            return
-        text = str(node.get_display_name().Text)
-        if node.get_parent().get_type_definition() == ua.FourByteNodeId(1002, 1):
-            icon = QIcon("icons/temp_sensor.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1003, 1):
-            icon = QIcon("icons/flow_sensor.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1006, 1):
-            icon = QIcon("icons/boiler.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1007, 1):
-            icon = QIcon("icons/motor.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1008, 1):
-            icon = QIcon("icons/valve.svg")
-        else:
-            icon = QIcon("icons/object.svg")
-        row = [QStandardItem(icon, text), QStandardItem("No Data yet"), QStandardItem("")]
-        row[0].setData(node)
-        self.model.appendRow(row)
-        self.subscribed_nodes.append(node)
-        try:
-            self.uaclient.subscribe_datachange(node, self._subhandler)
-        except Exception as ex:
-            self.window.show_error(ex)
-            idx = self.model.indexFromItem(row[0])
-            self.model.takeRow(idx.row())
-            raise
-
-    @trycatchslot
-    def _unsubscribe(self, node=None):
-        if not isinstance(node, Node):
-            node = self.window.get_current_node()
-        if node is None:
-            return
-        self.uaclient.unsubscribe_datachange(node)
-        self.subscribed_nodes.remove(node)
-        i = 0
-        while self.model.item(i):
-            item = self.model.item(i)
-            if item.data() == node:
-                self.model.removeRow(i)
-            i += 1
-
-    def _update_subscription_model(self, node, value, status_code, timestamp):
-        i = 0
-        while self.model.item(i):
-            item = self.model.item(i)
-            if item.data() == node:
-                it = self.model.item(i, 1)
-                it.setText(value)
-                if status_code == ua.StatusCodes.Good:
-                    it.setForeground(QBrush(QColor("green")))
-                elif status_code == ua.StatusCodes.Uncertain:
-                    it.setForeground(QBrush(QColor("yellow")))
-                else:  # StatusCode = Bad:
-                    it.setForeground(QBrush(QColor("red")))
-                it_ts = self.model.item(i, 2)
-                it_ts.setText(timestamp)
-            i += 1
 
 
 class Window(QMainWindow):
@@ -232,10 +88,14 @@ class Window(QMainWindow):
         # Attributes Widget
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
-        self.datachange_ui = DataChangeUI(self, self.uaclient)
+        self.sub_handler = DataChangeHandler()
+        self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler)
         self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionReload)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
+
+        # Cards Widget
+        self.datachangecards = []
 
         # Connection Buttons
         self.ui.connectButton.clicked.connect(self.handle_connect)
@@ -257,42 +117,38 @@ class Window(QMainWindow):
             model = QStandardItemModel()
             cardUi.variablesView.setModel(model)
 
+            width = 80
+            height = 80
+
             if custom_type == "BoilerType":
-                cardUi.icon.setPixmap(QPixmap("icons/boiler.svg").scaled(80, 80))
+                cardUi.icon.setPixmap(QPixmap("icons/boiler.svg").scaled(width, height, Qt.KeepAspectRatio))
             elif custom_type == "MotorType":
-                cardUi.icon.setPixmap(QPixmap("icons/motor.svg").scaled(80, 80))
+                cardUi.icon.setPixmap(QPixmap("icons/motor.svg").scaled(width, height, Qt.KeepAspectRatio))
             elif custom_type == "ValveType":
-                cardUi.icon.setPixmap(QPixmap("icons/valve.svg").scaled(80, 80))
+                cardUi.icon.setPixmap(QPixmap("icons/valve.svg").scaled(width, height, Qt.KeepAspectRatio))
             elif custom_type == "TempSensorType":
-                cardUi.icon.setPixmap(QPixmap("icons/temp_sensor.svg").scaled(80, 80))
+                cardUi.icon.setPixmap(QPixmap("icons/temp_sensor.svg").scaled(width, height, Qt.KeepAspectRatio))
             elif custom_type == "LevelIndicatorType":
-                cardUi.icon.setPixmap(QPixmap("icons/flow_sensor.svg").scaled(80, 80))
+                cardUi.icon.setPixmap(QPixmap("icons/level_indicator.svg").scaled(width, height, Qt.KeepAspectRatio))
+            elif custom_type == "FlowSensorType":
+                cardUi.icon.setPixmap(QPixmap("icons/flow_sensor.svg").scaled(width, height, Qt.KeepAspectRatio))
+
+            cardUi.icon.setAlignment(Qt.AlignCenter)
 
             variables = obj.get_children()
 
             for var in variables:
                 if var.get_node_class() == ua.NodeClass.Variable:
-                    if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.PropertyType):
-                        # Read
-                        print("Property")
-                        cardUi.variablesView.addItem(var.get_display_name().to_string())
-                        cardUi.variablesView.addItem(str(var.get_value()))
-                    else:
-                        print("Data Value")
+                    name = var.get_display_name().to_string()
+                    value = str(var.get_value())
+                    row = [QStandardItem(name), QStandardItem(value)]
+                    row[0].setData(var)
+                    model.appendRow(row)
+                    if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
                         # Subscribe
-                        name = var.get_display_name().to_string()
-                        value = str(var.get_value())
-                        row = [QStandardItem(name), QStandardItem(value)]
-                        row[0].setData(var)
-                        model.appendRow(row)
-                        #self.datachange_ui.subscribed_nodes.append(var)
-                        #try:
-                            #self.uaclient.subscribe_datachange(var, self.datachange_ui._subhandler)
-                        #except Exception as ex:
-                            #self.show_error(ex)
-                            #idx = self.model.indexFromItem(row[0])
-                            #self.model.takeRow(idx.row())
-                            #raise
+                        datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
+                        datachangecard_ui.subscribe(var, row[0])
+                        self.datachangecards.append(datachangecard_ui)
 
             item = QListWidgetItem()
             item.setSizeHint(cardWidget.sizeHint())

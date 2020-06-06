@@ -16,23 +16,19 @@ class UaClient:
         self.client = None
         self._connected = False
         self._datachange_sub = None
-        self._event_sub = None
         self._subs_dc = {}
-        self._subs_ev = {}
         self.security_mode = "None_"
         self.security_policy = "None"
         self.certificate_path = ""
         self.private_key_path = ""
         self.known_custom_types = ["BoilerType", "MotorType", "ValveType",
-                                   "TempSensorType", "LevelIndicatorType"]
+                                   "TempSensorType", "LevelIndicatorType", "FlowSensorType"]
 
     def _reset(self):
         self.client = None
         self._connected = False
         self._datachange_sub = None
-        self._event_sub = None
         self._subs_dc = {}
-        self._subs_ev = {}
 
     @staticmethod
     def get_endpoints(uri):

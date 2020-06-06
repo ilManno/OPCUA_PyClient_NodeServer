@@ -1,6 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, QMimeData, QObject, Qt, QSettings
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QApplication, QAbstractItemView, QAction
+from PyQt5.QtWidgets import QApplication
 
 from opcua import ua, Node
 from opcua.ua import UaError
@@ -186,6 +186,8 @@ class TreeViewModel(QStandardItemModel):
                 if desc.TypeDefinition == ua.FourByteNodeId(1002, 1):
                     item[0].setIcon(QIcon("icons/temp_sensor.svg"))
                 elif desc.TypeDefinition == ua.FourByteNodeId(1003, 1):
+                    item[0].setIcon(QIcon("icons/level_indicator.svg"))
+                elif desc.TypeDefinition == ua.FourByteNodeId(1004, 1):
                     item[0].setIcon(QIcon("icons/flow_sensor.svg"))
                 elif desc.TypeDefinition == ua.FourByteNodeId(1006, 1):
                     item[0].setIcon(QIcon("icons/boiler.svg"))
