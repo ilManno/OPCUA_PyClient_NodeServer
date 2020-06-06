@@ -21,6 +21,7 @@ class UaClient:
         self.security_policy = "None"
         self.certificate_path = ""
         self.private_key_path = ""
+        self.custom_objects = {}
         self.known_custom_types = ["BoilerType", "MotorType", "ValveType",
                                    "TempSensorType", "LevelIndicatorType", "FlowSensorType"]
 
@@ -111,8 +112,7 @@ class UaClient:
             self._datachange_sub.delete()
             print("Subscription correctly deleted")
 
-    def get_custom_objects(self):
-        custom_objects = []
+    def find_custom_objects(self):
         objects = self.client.get_objects_node().get_children()
         for obj in objects:
             if obj.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.FolderType):
@@ -126,6 +126,5 @@ class UaClient:
                             if typename == "HasTypeDefinition":
                                 custom_type = ref.DisplayName.to_string()
                                 if custom_type in self.known_custom_types:
-                                    custom_objects.append((dev, custom_type))
+                                    self.custom_objects[dev.nodeid] = custom_type
                                 break
-        return custom_objects

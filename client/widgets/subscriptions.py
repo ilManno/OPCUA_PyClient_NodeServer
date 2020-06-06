@@ -6,15 +6,14 @@ from PyQt5.QtWidgets import QMenu, QAction
 
 from opcua import ua, Node
 
-from utils import trycatchslot
-
+from utils import trycatchslot, get_icon
 
 logger = logging.getLogger("__main__")
 
 
 class DataChangeUI(object):
 
-    def __init__(self, window, uaclient, sub_handler):
+    def __init__(self, window, uaclient, sub_handler, custom_objects):
         self.window = window
         self.uaclient = uaclient
         self._subhandler = sub_handler
@@ -23,6 +22,7 @@ class DataChangeUI(object):
         self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         self.window.ui.subView.setModel(self.model)
         self.window.ui.subView.setColumnWidth(1, 150)
+        self.custom_objects = custom_objects
 
         self.window.ui.actionSubscribeDataChange.triggered.connect(self._subscribe)
         self.window.ui.actionUnsubscribeDataChange.triggered.connect(self._unsubscribe)
@@ -87,21 +87,13 @@ class DataChangeUI(object):
             logger.warning("already subscribed to node: %s ", node)
             return
         text = str(node.get_display_name().Text)
-        if node.get_parent().get_type_definition() == ua.FourByteNodeId(1002, 1):
-            icon = QIcon("icons/temp_sensor.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1003, 1):
-            icon = QIcon("icons/level_indicator.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1004, 1):
-            icon = QIcon("icons/flow_sensor.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1006, 1):
-            icon = QIcon("icons/boiler.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1007, 1):
-            icon = QIcon("icons/motor.svg")
-        elif node.get_parent().get_type_definition() == ua.FourByteNodeId(1008, 1):
-            icon = QIcon("icons/valve.svg")
-        else:
-            icon = QIcon("icons/object.svg")
-        row = [QStandardItem(icon, text), QStandardItem("No Data yet"), QStandardItem("")]
+        nodeid = node.get_parent().nodeid
+        try:
+            object_type = self.custom_objects[nodeid]
+            icon = get_icon(object_type)
+        except KeyError:
+            icon = "icons/object.svg"
+        row = [QStandardItem(QIcon(icon), text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
         self.subscribed_nodes.append(node)

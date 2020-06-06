@@ -5,15 +5,17 @@ from PyQt5.QtWidgets import QApplication
 from opcua import ua, Node
 from opcua.ua import UaError
 
+from utils import get_icon
+
 
 class TreeWidget(QObject):
 
     error = pyqtSignal(Exception)
 
-    def __init__(self, view):
+    def __init__(self, view, custom_objects):
         super().__init__(view)
         self.view = view
-        self.model = TreeViewModel()
+        self.model = TreeViewModel(custom_objects)
         self.model.clear()  # FIXME: do we need this?
         self.model.error.connect(self.error)
         self.view.setModel(self.model)
@@ -21,6 +23,7 @@ class TreeWidget(QObject):
         #self.view.setUniformRowHeights(True)
         self.model.setHorizontalHeaderLabels(['DisplayName', "BrowseName", 'NodeId'])
         self.view.setColumnWidth(0, 200)
+
         self.settings = QSettings()
         state = self.settings.value("tree_widget_state", None)
         if state is not None:
@@ -148,9 +151,10 @@ class TreeViewModel(QStandardItemModel):
 
     error = pyqtSignal(Exception)
 
-    def __init__(self):
+    def __init__(self, custom_objects):
         super().__init__()
         self._fetched = []
+        self.custom_objects = custom_objects
 
     def clear(self):
         # remove all rows but not header!!
@@ -183,20 +187,12 @@ class TreeViewModel(QStandardItemModel):
             if desc.TypeDefinition == ua.TwoByteNodeId(ua.ObjectIds.FolderType):
                 item[0].setIcon(QIcon("icons/folder.svg"))
             else:
-                if desc.TypeDefinition == ua.FourByteNodeId(1002, 1):
-                    item[0].setIcon(QIcon("icons/temp_sensor.svg"))
-                elif desc.TypeDefinition == ua.FourByteNodeId(1003, 1):
-                    item[0].setIcon(QIcon("icons/level_indicator.svg"))
-                elif desc.TypeDefinition == ua.FourByteNodeId(1004, 1):
-                    item[0].setIcon(QIcon("icons/flow_sensor.svg"))
-                elif desc.TypeDefinition == ua.FourByteNodeId(1006, 1):
-                    item[0].setIcon(QIcon("icons/boiler.svg"))
-                elif desc.TypeDefinition == ua.FourByteNodeId(1007, 1):
-                    item[0].setIcon(QIcon("icons/motor.svg"))
-                elif desc.TypeDefinition == ua.FourByteNodeId(1008, 1):
-                    item[0].setIcon(QIcon("icons/valve.svg"))
-                else:
-                    item[0].setIcon(QIcon("icons/object.svg"))
+                try:
+                    object_type = self.custom_objects[desc.NodeId]
+                    icon = get_icon(object_type)
+                except KeyError:
+                    icon = "icons/object.svg"
+                item[0].setIcon(QIcon(icon))
         elif desc.NodeClass == ua.NodeClass.Variable:
             if desc.TypeDefinition == ua.TwoByteNodeId(ua.ObjectIds.PropertyType):
                 item[0].setIcon(QIcon("icons/property.svg"))
@@ -205,13 +201,13 @@ class TreeViewModel(QStandardItemModel):
         elif desc.NodeClass == ua.NodeClass.Method:
             item[0].setIcon(QIcon("icons/method.svg"))
         elif desc.NodeClass == ua.NodeClass.ObjectType:
-            item[0].setIcon(QIcon("icons/object_type.svg"))
+            item[0].setIcon(QIcon("icons/objecttype.svg"))
         elif desc.NodeClass == ua.NodeClass.VariableType:
-            item[0].setIcon(QIcon("icons/variable_type.svg"))
+            item[0].setIcon(QIcon("icons/variabletype.svg"))
         elif desc.NodeClass == ua.NodeClass.DataType:
-            item[0].setIcon(QIcon("icons/data_type.svg"))
+            item[0].setIcon(QIcon("icons/datatype.svg"))
         elif desc.NodeClass == ua.NodeClass.ReferenceType:
-            item[0].setIcon(QIcon("icons/reference_type.svg"))
+            item[0].setIcon(QIcon("icons/referencetype.svg"))
         if node:
             item[0].setData(node, Qt.UserRole)
         else:

@@ -16,7 +16,7 @@ from widgets.card import Ui_CardWidget
 from widgets.references import RefsWidget
 from widgets.tree import TreeWidget
 from widgets.sub_handler import DataChangeHandler
-from utils import trycatchslot
+from utils import trycatchslot, get_icon
 
 from dialogs.options import OptionsDialog
 from mainwindow_ui import Ui_MainWindow
@@ -69,7 +69,7 @@ class Window(QMainWindow):
         self.ui.addrComboBox.setCompleter(None)
 
         # Objects Tree
-        self.tree_ui = TreeWidget(self.ui.treeView)
+        self.tree_ui = TreeWidget(self.ui.treeView, self.uaclient.custom_objects)
         self.tree_ui.error.connect(self.show_error)
         self.setup_context_menu_tree()
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_refs)
@@ -89,7 +89,7 @@ class Window(QMainWindow):
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
         self.sub_handler = DataChangeHandler()
-        self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler)
+        self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler, self.uaclient.custom_objects)
         self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionReload)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
@@ -108,8 +108,8 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
-    def show_cards(self, custom_objects):
-        for obj, custom_type in custom_objects:
+    def show_cards(self):
+        for nodeid, object_type in self.uaclient.custom_objects.items():
             cardWidget = QWidget()
             cardUi = Ui_CardWidget()
             cardUi.setupUi(cardWidget)
@@ -120,22 +120,11 @@ class Window(QMainWindow):
             width = 80
             height = 80
 
-            if custom_type == "BoilerType":
-                cardUi.icon.setPixmap(QPixmap("icons/boiler.svg").scaled(width, height, Qt.KeepAspectRatio))
-            elif custom_type == "MotorType":
-                cardUi.icon.setPixmap(QPixmap("icons/motor.svg").scaled(width, height, Qt.KeepAspectRatio))
-            elif custom_type == "ValveType":
-                cardUi.icon.setPixmap(QPixmap("icons/valve.svg").scaled(width, height, Qt.KeepAspectRatio))
-            elif custom_type == "TempSensorType":
-                cardUi.icon.setPixmap(QPixmap("icons/temp_sensor.svg").scaled(width, height, Qt.KeepAspectRatio))
-            elif custom_type == "LevelIndicatorType":
-                cardUi.icon.setPixmap(QPixmap("icons/level_indicator.svg").scaled(width, height, Qt.KeepAspectRatio))
-            elif custom_type == "FlowSensorType":
-                cardUi.icon.setPixmap(QPixmap("icons/flow_sensor.svg").scaled(width, height, Qt.KeepAspectRatio))
-
+            icon = get_icon(object_type)
+            cardUi.icon.setPixmap(QPixmap(icon).scaled(width, height, Qt.KeepAspectRatio))
             cardUi.icon.setAlignment(Qt.AlignCenter)
 
-            variables = obj.get_children()
+            variables = self.uaclient.get_node(nodeid).get_children()
 
             for var in variables:
                 if var.get_node_class() == ua.NodeClass.Variable:
@@ -233,6 +222,8 @@ class Window(QMainWindow):
             raise
 
         self._update_address_list(uri)
+        self.uaclient.find_custom_objects()
+        self.show_cards()
         self.tree_ui.set_root_node(self.uaclient.client.get_root_node())
         self.ui.treeView.setFocus()
         self.load_current_node()
@@ -240,8 +231,6 @@ class Window(QMainWindow):
         self.ui.connectButton.setEnabled(True)
         self.ui.optionsButton.setEnabled(False)
         self.ui.addrComboBox.setEnabled(False)
-        custom_objects = self.uaclient.get_custom_objects()
-        self.show_cards(custom_objects)
 
     def _update_address_list(self, uri):
         if uri in self._address_list:

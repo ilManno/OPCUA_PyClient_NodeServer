@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'card.ui'
+# Form implementation generated from reading ui file '.\widgets\card.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.2
 #
@@ -17,6 +17,7 @@ class Ui_CardWidget(object):
         self.gridLayout = QtWidgets.QGridLayout(CardWidget)
         self.gridLayout.setObjectName("gridLayout")
         self.splitter = QtWidgets.QSplitter(CardWidget)
+        self.splitter.setStyleSheet("background-color: #f2f2f2;")
         self.splitter.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
@@ -25,6 +26,7 @@ class Ui_CardWidget(object):
         self.variablesView = QtWidgets.QTableView(self.splitter)
         self.variablesView.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.variablesView.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.variablesView.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         self.variablesView.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.variablesView.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.variablesView.setShowGrid(False)

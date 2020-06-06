@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainwindow_ui.ui'
+# Form implementation generated from reading ui file '.\mainwindow_ui.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.2
 #
@@ -15,7 +15,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(922, 879)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("icons/client.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(".\\icons/client.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralWidget = QtWidgets.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
@@ -32,6 +32,9 @@ class Ui_MainWindow(object):
         self.gridLayout_3.setSpacing(6)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.scadaWidget = QtWidgets.QListWidget(self.scadaTab)
+        self.scadaWidget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        self.scadaWidget.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.scadaWidget.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.scadaWidget.setObjectName("scadaWidget")
         self.gridLayout_3.addWidget(self.scadaWidget, 0, 0, 1, 1)
         self.tabWidget.addTab(self.scadaTab, "")
@@ -68,7 +71,6 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.attrDockWidget.sizePolicy().hasHeightForWidth())
         self.attrDockWidget.setSizePolicy(sizePolicy)
         self.attrDockWidget.setMinimumSize(QtCore.QSize(400, 170))
-        self.attrDockWidget.setFeatures(QtWidgets.QDockWidget.DockWidgetClosable|QtWidgets.QDockWidget.DockWidgetMovable)
         self.attrDockWidget.setObjectName("attrDockWidget")
         self.dockWidgetContents = QtWidgets.QWidget()
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
@@ -143,7 +145,6 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.refDockWidget.sizePolicy().hasHeightForWidth())
         self.refDockWidget.setSizePolicy(sizePolicy)
-        self.refDockWidget.setFeatures(QtWidgets.QDockWidget.DockWidgetClosable|QtWidgets.QDockWidget.DockWidgetMovable)
         self.refDockWidget.setObjectName("refDockWidget")
         self.dockWidgetContents_4 = QtWidgets.QWidget()
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
@@ -169,7 +170,6 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.treeDockWidget.sizePolicy().hasHeightForWidth())
         self.treeDockWidget.setSizePolicy(sizePolicy)
-        self.treeDockWidget.setFeatures(QtWidgets.QDockWidget.DockWidgetClosable|QtWidgets.QDockWidget.DockWidgetMovable)
         self.treeDockWidget.setObjectName("treeDockWidget")
         self.dockWidgetContents_5 = QtWidgets.QWidget()
         self.dockWidgetContents_5.setObjectName("dockWidgetContents_5")
@@ -187,7 +187,6 @@ class Ui_MainWindow(object):
         self.treeDockWidget.setWidget(self.dockWidgetContents_5)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.treeDockWidget)
         self.logDockWidget = QtWidgets.QDockWidget(MainWindow)
-        self.logDockWidget.setFeatures(QtWidgets.QDockWidget.DockWidgetClosable|QtWidgets.QDockWidget.DockWidgetMovable)
         self.logDockWidget.setObjectName("logDockWidget")
         self.dockWidgetContents_6 = QtWidgets.QWidget()
         self.dockWidgetContents_6.setObjectName("dockWidgetContents_6")

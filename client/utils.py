@@ -28,3 +28,8 @@ def trycatchslot(func):
                 logger.warning("Error class % has no member show_error or error", self)
         return result
     return wrapper
+
+
+def get_icon(custom_object_type):
+    icon = "icons/" + custom_object_type.lower().replace("type", "") + ".svg"
+    return icon
