@@ -2,7 +2,7 @@ import logging
 import sys
 
 from PyQt5.QtCore import QTimer, Qt, QSettings, QItemSelection, QCoreApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QFont
 from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QListWidgetItem
 
 from opcua import ua
@@ -113,9 +113,12 @@ class Window(QMainWindow):
             cardWidget = QWidget()
             cardUi = Ui_CardWidget()
             cardUi.setupUi(cardWidget)
+            cardUi.variablesView.setStyleSheet("QHeaderView::section { background-color: #fafafa; border: none; height: 20px; }")
 
             model = QStandardItemModel()
+            model.setHorizontalHeaderLabels(['', ''])
             cardUi.variablesView.setModel(model)
+            cardUi.variablesView.setColumnWidth(0, 120)
 
             width = 80
             height = 80
@@ -135,21 +138,33 @@ class Window(QMainWindow):
                     value = str(var.get_value())
                     row = [QStandardItem(name), QStandardItem(value)]
                     row[0].setData(var)
-                    # Data Variable
                     if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
+                        # Data Variable
                         d_rows.append(row)
                         datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
                         datachangecard_ui.subscribe(var, row[0])
                         self.datachangecards.append(datachangecard_ui)
-                    else: # Property
+                    else:
+                        # Property
                         p_rows.append(row)
 
-            #model.appendRow([QStandardItem("Properties:")])
+            font = QFont()
+            font.setPointSize(10)
+            font.setBold(True)
+            font.setUnderline(True)
+
+            p_header = QStandardItem("Properties")
+            p_header.setFont(font)
+            d_header = QStandardItem("Data Values")
+            d_header.setFont(font)
+
+            model.appendRow(p_header)
             # Append property rows
             for p_row in p_rows:
                 model.appendRow(p_row)
 
-            #model.appendRow([QStandardItem("Data:")])
+            model.appendRow(QStandardItem(""))
+            model.appendRow(d_header)
             # Append data_variable rows
             for d_row in d_rows:
                 model.appendRow(d_row)
