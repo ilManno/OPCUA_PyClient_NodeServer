@@ -102,42 +102,19 @@ server.initialize(() => {
             browseName: "Actuators"
         });
 
-        //Sensors
+        // Sensors
+        // Temp Sensor
         const tempSensor = namespace.addObject({
             browseName: "TempSensor",
             organizedBy: sensors,
             typeDefinition: tempSensorType
         });
 
-        const levelIndicator = namespace.addObject({
-            browseName: "LevelIndicator",
-            organizedBy: sensors,
-            typeDefinition: levelIndicatorType
-        });
-
-        const flowSensor = namespace.addObject({
-            browseName: "FlowSensor",
-            organizedBy: sensors,
-            typeDefinition: flowSensorType
-        });
-
         const min_temp = -40
         const max_temp = 125
-
-        namespace.addVariable({
-            componentOf: tempSensor,
-            browseName: "Output",
-            dataType: "Double",
-            value: {
-                get: function() {
-                    return new opcua.Variant({
-                        dataType: opcua.DataType.Double,
-                        value: getRandomValue(min_temp, max_temp)
-                    })
-                }
-            }
-        })
-
+        const min_v = 2.1 
+        const max_v = 3.6      
+        
         namespace.addVariable({
             propertyOf: tempSensor,
             browseName: "Min Temp",
@@ -167,6 +144,83 @@ server.initialize(() => {
         });
 
         namespace.addVariable({
+            propertyOf: tempSensor,
+            browseName: "Min V",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: min_v
+                    });
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: tempSensor,
+            browseName: "Max V",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: max_v
+                    });
+                }
+            }
+        });
+
+        namespace.addVariable({
+            componentOf: tempSensor,
+            browseName: "Output",
+            dataType: "Double",
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(min_temp, max_temp)
+                    })
+                }
+            }
+        })
+
+        // Level Indicator
+        const levelIndicator = namespace.addObject({
+            browseName: "LevelIndicator",
+            organizedBy: sensors,
+            typeDefinition: levelIndicatorType
+        });
+
+        namespace.addVariable({
+            propertyOf: levelIndicator,
+            browseName: "Min Temp",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: -40
+                    });
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: levelIndicator,
+            browseName: "Max Temp",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: 85
+                    });
+                }
+            }
+        });
+
+        namespace.addVariable({
             componentOf: levelIndicator,
             browseName: "Output",
             dataType: "Double",
@@ -179,6 +233,41 @@ server.initialize(() => {
                 }
             }
         })
+
+        // Flow Sensor
+        const flowSensor = namespace.addObject({
+            browseName: "FlowSensor",
+            organizedBy: sensors,
+            typeDefinition: flowSensorType
+        });
+
+        namespace.addVariable({
+            propertyOf: flowSensor,
+            browseName: "Min V",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: 4.5
+                    });
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: flowSensor,
+            browseName: "Max V",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: 24
+                    });
+                }
+            }
+        });
 
         namespace.addVariable({
             componentOf: flowSensor,
@@ -194,23 +283,26 @@ server.initialize(() => {
             }
         })
 
-        //Actuators
+        // Actuators
+        // Boiler
         const boiler = namespace.addObject({
             browseName: "Boiler",
             organizedBy: actuators,
             typeDefinition: boilerType
         });
 
-        const motor = namespace.addObject({
-            browseName: "Motor",
-            organizedBy: actuators,
-            typeDefinition: motorType
-        });
-
-        const valve = namespace.addObject({
-            browseName: "Valve",
-            organizedBy: actuators,
-            typeDefinition: valveType
+        namespace.addVariable({
+            propertyOf: boiler,
+            browseName: "Nominal Power",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: 3
+                    });
+                }
+            }
         });
 
         namespace.addVariable({
@@ -227,6 +319,41 @@ server.initialize(() => {
             }
         })
 
+        // Motor
+        const motor = namespace.addObject({
+            browseName: "Motor",
+            organizedBy: actuators,
+            typeDefinition: motorType
+        });
+
+        namespace.addVariable({
+            propertyOf: motor,
+            browseName: "Voltage",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: 24
+                    });
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: motor,
+            browseName: "Exit Speed",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: 6500
+                    });
+                }
+            }
+        });
+
         namespace.addVariable({
             componentOf: motor,
             browseName: "Input",
@@ -240,6 +367,41 @@ server.initialize(() => {
                 }
             }
         })
+
+        // Valve
+        const valve = namespace.addObject({
+            browseName: "Valve",
+            organizedBy: actuators,
+            typeDefinition: valveType
+        });
+
+        namespace.addVariable({
+            propertyOf: valve,
+            browseName: "Exit Voltage",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: 330
+                    });
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: valve,
+            browseName: "Base Type",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.String, 
+                        value: "B9A"
+                    });
+                }
+            }
+        });
 
         namespace.addVariable({
             componentOf: valve,

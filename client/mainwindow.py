@@ -126,18 +126,33 @@ class Window(QMainWindow):
 
             variables = self.uaclient.get_node(nodeid).get_children()
 
+            d_rows = []
+            p_rows = []
+
             for var in variables:
                 if var.get_node_class() == ua.NodeClass.Variable:
                     name = var.get_display_name().to_string()
                     value = str(var.get_value())
                     row = [QStandardItem(name), QStandardItem(value)]
                     row[0].setData(var)
-                    model.appendRow(row)
+                    # Data Variable
                     if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
-                        # Subscribe
+                        d_rows.append(row)
                         datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
                         datachangecard_ui.subscribe(var, row[0])
                         self.datachangecards.append(datachangecard_ui)
+                    else: # Property
+                        p_rows.append(row)
+
+            #model.appendRow([QStandardItem("Properties:")])
+            # Append property rows
+            for p_row in p_rows:
+                model.appendRow(p_row)
+
+            #model.appendRow([QStandardItem("Data:")])
+            # Append data_variable rows
+            for d_row in d_rows:
+                model.appendRow(d_row)
 
             item = QListWidgetItem()
             item.setSizeHint(cardWidget.sizeHint())
