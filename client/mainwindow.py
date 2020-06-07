@@ -121,7 +121,7 @@ class Window(QMainWindow):
             height = 80
 
             icon = get_icon(object_type)
-            cardUi.icon.setPixmap(QPixmap(icon).scaled(width, height, Qt.KeepAspectRatio))
+            cardUi.icon.setPixmap(QPixmap(icon).scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             cardUi.icon.setAlignment(Qt.AlignCenter)
 
             variables = self.uaclient.get_node(nodeid).get_children()

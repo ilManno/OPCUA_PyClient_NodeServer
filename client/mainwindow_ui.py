@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\mainwindow_ui.ui'
+# Form implementation generated from reading ui file 'mainwindow_ui.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.2
 #
@@ -15,7 +15,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(922, 879)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(".\\icons/client.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("icons/client.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralWidget = QtWidgets.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
@@ -49,6 +49,7 @@ class Ui_MainWindow(object):
         self.subView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.subView.setDragDropOverwriteMode(False)
         self.subView.setDragDropMode(QtWidgets.QAbstractItemView.DropOnly)
+        self.subView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.subView.setObjectName("subView")
         self.subView.horizontalHeader().setStretchLastSection(True)
         self.gridLayout_7.addWidget(self.subView, 0, 0, 1, 1)
@@ -159,6 +160,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.refView = QtWidgets.QTableView(self.dockWidgetContents_4)
         self.refView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.refView.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         self.refView.setObjectName("refView")
         self.refView.horizontalHeader().setStretchLastSection(True)
         self.verticalLayout_2.addWidget(self.refView)
@@ -214,7 +216,7 @@ class Ui_MainWindow(object):
         self.menuBar.addAction(self.menuView.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

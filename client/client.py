@@ -98,19 +98,26 @@ class UaClient:
     def subscribe_datachange(self, node, handler):
         if not self._datachange_sub:
             self._datachange_sub = self.client.create_subscription(500, handler)
-        handle = self._datachange_sub.subscribe_data_change(node)
-        self._subs_dc[node.nodeid] = handle
-        return handle
+        if node.nodeid not in self._subs_dc:
+            handle = self._datachange_sub.subscribe_data_change(node)
+            self._subs_dc[node.nodeid] = [handle, False]
+        else:
+            # Duplicate found
+            self._subs_dc[node.nodeid][1] = True
 
     def unsubscribe_datachange(self, node):
-        self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
+        if not self._subs_dc[node.nodeid][1]:
+            self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
+            del self._subs_dc[node.nodeid]
+        else:
+            # Duplicate found
+            self._subs_dc[node.nodeid][1] = False
 
     def delete_subscription(self):
         if self._datachange_sub:
-            for handle in self._subs_dc.values():
+            for handle, _ in self._subs_dc.values():
                 self._datachange_sub.unsubscribe(handle)
             self._datachange_sub.delete()
-            print("Subscription correctly deleted")
 
     def find_custom_objects(self):
         objects = self.client.get_objects_node().get_children()
