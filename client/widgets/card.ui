@@ -27,11 +27,17 @@
      </property>
      <widget class="QLabel" name="icon"/>
      <widget class="QTableView" name="variablesView">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
       <property name="sizeAdjustPolicy">
        <enum>QAbstractScrollArea::AdjustToContents</enum>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
       </property>
       <property name="selectionMode">
        <enum>QAbstractItemView::NoSelection</enum>
@@ -45,17 +51,17 @@
       <property name="showGrid">
        <bool>false</bool>
       </property>
-      <attribute name="horizontalHeaderHighlightSections">
-       <bool>false</bool>
+      <attribute name="horizontalHeaderMinimumSectionSize">
+       <number>20</number>
       </attribute>
-      <attribute name="horizontalHeaderStretchLastSection">
-       <bool>true</bool>
+      <attribute name="horizontalHeaderDefaultSectionSize">
+       <number>20</number>
       </attribute>
       <attribute name="verticalHeaderVisible">
        <bool>false</bool>
       </attribute>
       <attribute name="verticalHeaderMinimumSectionSize">
-       <number>15</number>
+       <number>20</number>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
        <number>20</number>

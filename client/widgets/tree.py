@@ -45,10 +45,6 @@ class TreeWidget(QObject):
         path_str = ",".join(path)
         QApplication.clipboard().setText(path_str)
 
-    def expand_current_node(self, expand=True):
-        idx = self.view.currentIndex()
-        self.view.setExpanded(idx, expand)
-
     def expand_to_node(self, node):
         """
         Expand tree until given node and select it
@@ -92,18 +88,6 @@ class TreeWidget(QObject):
             it = it.parent()
         return path
 
-    def update_browse_name_current_item(self, bname):
-        idx = self.view.currentIndex()
-        idx = idx.sibling(idx.row(), 1)
-        it = self.model.itemFromIndex(idx)
-        it.setText(bname.to_string())
-
-    def update_display_name_current_item(self, dname):
-        idx = self.view.currentIndex()
-        idx = idx.sibling(idx.row(), 0)
-        it = self.model.itemFromIndex(idx)
-        it.setText(dname.Text)
-
     def reload_current(self):
         idx = self.view.currentIndex()
         idx = idx.sibling(idx.row(), 0)
@@ -127,10 +111,6 @@ class TreeWidget(QObject):
             idx = self.model.indexFromItem(item)
             #if self.view.isExpanded(idx):
             #self.view.setExpanded(idx, True)
-
-    def remove_current_item(self):
-        idx = self.view.currentIndex()
-        self.model.removeRow(idx.row(), idx.parent())
 
     def get_current_node(self, idx=None):
         if idx is None:

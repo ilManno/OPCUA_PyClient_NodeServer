@@ -95,27 +95,19 @@ class UaClient:
             finally:
                 self._reset()
 
-    def subscribe_datachange(self, node, handler):
+    def subscribe_datachange(self, node, handler=None):
         if not self._datachange_sub:
             self._datachange_sub = self.client.create_subscription(500, handler)
-        if node.nodeid not in self._subs_dc:
-            handle = self._datachange_sub.subscribe_data_change(node)
-            self._subs_dc[node.nodeid] = [handle, False]
-        else:
-            # Duplicate found
-            self._subs_dc[node.nodeid][1] = True
+        handle = self._datachange_sub.subscribe_data_change(node)
+        self._subs_dc[node.nodeid] = handle
 
     def unsubscribe_datachange(self, node):
-        if not self._subs_dc[node.nodeid][1]:
-            self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
-            del self._subs_dc[node.nodeid]
-        else:
-            # Duplicate found
-            self._subs_dc[node.nodeid][1] = False
+        self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
+        del self._subs_dc[node.nodeid]
 
     def delete_subscription(self):
         if self._datachange_sub:
-            for handle, _ in self._subs_dc.values():
+            for handle in self._subs_dc.values():
                 self._datachange_sub.unsubscribe(handle)
             self._datachange_sub.delete()
 

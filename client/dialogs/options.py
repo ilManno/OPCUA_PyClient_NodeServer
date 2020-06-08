@@ -1,6 +1,7 @@
 from pathlib import Path
+import subprocess
 
-from PyQt5.QtWidgets import QDialog, QFileDialog
+from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox
 
 from dialogs.options_ui import Ui_OptionsDialog
 from utils import trycatchslot
@@ -21,6 +22,7 @@ class OptionsDialog(QDialog):
         self.ui.modeComboBox.currentTextChanged.connect(self._change_policies)
         self.ui.certificateButton.clicked.connect(self.select_certificate)
         self.ui.privateKeyButton.clicked.connect(self.select_private_key)
+        self.ui.generateButton.clicked.connect(self.generate_certificate)
         self.ui.connectButton.clicked.connect(self.accept)
         self.ui.cancelButton.clicked.connect(self.reject)
 
@@ -51,12 +53,14 @@ class OptionsDialog(QDialog):
             self.ui.certificateLabel.hide()
             self.ui.privateKeyButton.setEnabled(False)
             self.ui.privateKeyLabel.hide()
+            self.ui.generateButton.setEnabled(False)
             self.ui.connectButton.setEnabled(True)
         else:
             self.ui.certificateButton.setEnabled(True)
             self.ui.certificateLabel.show()
             self.ui.privateKeyButton.setEnabled(True)
             self.ui.privateKeyLabel.show()
+            self.ui.generateButton.setEnabled(True)
             if self.certificate_path and self.private_key_path:
                 self.ui.connectButton.setEnabled(True)
             else:
@@ -77,6 +81,36 @@ class OptionsDialog(QDialog):
             self.ui.privateKeyLabel.setText(Path(path).name)
             if self.certificate_path:
                 self.ui.connectButton.setEnabled(True)
+
+    def generate_certificate(self):
+        private_key_path = QFileDialog.getSaveFileName(self, "Save private key file", "my_private_key.pem", "Private key (*.pem)")[0]
+        if private_key_path:
+            private_key_ext = Path(private_key_path).suffix
+            if private_key_ext != ".pem":
+                private_key_path += ".pem"
+            path = Path(private_key_path).parent
+            certificate_path = QFileDialog.getSaveFileName(self, "Save certificate file", str(path.joinpath("my_cert.der")), "Certificate (*.der)")[0]
+            if certificate_path:
+                certificate_ext = Path(certificate_path).suffix
+                if certificate_ext != ".der":
+                    certificate_path += ".der"
+                return_code = subprocess.call(
+                    f"""openssl req -x509 -newkey rsa:2048 \
+                    -keyout {private_key_path} -nodes \
+                    -outform der -out {certificate_path} \
+                    -subj '/C=IT/ST=Catania/O=UniCT' \
+                    -addext 'subjectAltName = URI:urn:example.org:OpcUa:python-client'""",
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+                if return_code == 0:
+                    QMessageBox.information(self, "Success", "Certificate generated successfully")
+                    self.certificate_path = certificate_path
+                    self.ui.certificateLabel.setText(Path(certificate_path).name)
+                    self.private_key_path = private_key_path
+                    self.ui.privateKeyLabel.setText(Path(private_key_path).name)
+                    self.ui.connectButton.setEnabled(True)
+                else:
+                    QMessageBox.warning(self, "Error", "Unable to generate certificate")
 
     def get_selected_options(self):
         return self.ui.modeComboBox.currentText(), self.ui.policyComboBox.currentText(), self.certificate_path, self.private_key_path

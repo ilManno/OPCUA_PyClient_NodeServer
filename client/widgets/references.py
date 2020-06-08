@@ -22,7 +22,6 @@ class RefsWidget(QObject):
         self.view = view
         self.model = QStandardItemModel()
 
-        self.view.setEditTriggers(QAbstractItemView.DoubleClicked)
         self.view.setModel(self.model)
         self.settings = QSettings()
         self.model.setHorizontalHeaderLabels(['ReferenceType', 'NodeId', "BrowseName", "TypeDefinition"])

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>387</width>
-    <height>283</height>
+    <width>408</width>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,17 +18,30 @@
     <normaloff>icons/property.svg</normaloff>icons/property.svg</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="1">
-    <widget class="QLabel" name="modeLabel">
-     <property name="text">
-      <string>Message Security Mode</string>
+   <item row="6" column="0" colspan="4">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>25</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="5" column="2" colspan="2">
+    <widget class="QPushButton" name="generateButton">
+     <property name="text">
+      <string>Generate valid certificate</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="2">
+   <item row="7" column="2">
     <widget class="QPushButton" name="connectButton">
      <property name="text">
       <string>Connect</string>
@@ -42,70 +55,6 @@
      </property>
      <property name="text">
       <string>Select private key</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="3">
-    <widget class="QPushButton" name="cancelButton">
-     <property name="text">
-      <string>Cancel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2" colspan="2">
-    <widget class="QPushButton" name="certificateButton">
-     <property name="toolTip">
-      <string>Select DER File</string>
-     </property>
-     <property name="text">
-      <string>Select certificate</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="2" colspan="2">
-    <widget class="QComboBox" name="policyComboBox"/>
-   </item>
-   <item row="0" column="0" rowspan="2">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>25</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="0" column="2" colspan="2">
-    <widget class="QComboBox" name="modeComboBox"/>
-   </item>
-   <item row="1" column="1">
-    <widget class="QLabel" name="policyLabel">
-     <property name="text">
-      <string>Security Policy</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QLabel" name="privateKeyLabel">
-     <property name="font">
-      <font>
-       <italic>true</italic>
-      </font>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
@@ -123,6 +72,80 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
+   </item>
+   <item row="7" column="3">
+    <widget class="QPushButton" name="cancelButton">
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2" colspan="2">
+    <widget class="QComboBox" name="modeComboBox"/>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLabel" name="policyLabel">
+     <property name="text">
+      <string>Security Policy</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2" colspan="2">
+    <widget class="QPushButton" name="certificateButton">
+     <property name="toolTip">
+      <string>Select DER File</string>
+     </property>
+     <property name="text">
+      <string>Select certificate</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" rowspan="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>25</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QLabel" name="privateKeyLabel">
+     <property name="font">
+      <font>
+       <italic>true</italic>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="modeLabel">
+     <property name="text">
+      <string>Message Security Mode</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2" colspan="2">
+    <widget class="QComboBox" name="policyComboBox"/>
    </item>
    <item row="4" column="0" colspan="4">
     <spacer name="verticalSpacer">

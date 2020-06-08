@@ -83,11 +83,11 @@ class DataChangeUI(object):
             node = self.window.get_current_node()
             if node is None:
                 return
-        if node in self.subscribed_nodes:
+        nodeid = node.get_parent().nodeid
+        if node in self.subscribed_nodes or nodeid in self.uaclient.custom_objects:
             logger.warning("already subscribed to node: %s ", node)
             return
         text = str(node.get_display_name().Text)
-        nodeid = node.get_parent().nodeid
         try:
             object_type = self.custom_objects[nodeid]
             icon = get_icon(object_type)
@@ -99,6 +99,7 @@ class DataChangeUI(object):
         self.subscribed_nodes.append(node)
         try:
             self.uaclient.subscribe_datachange(node, self._subhandler)
+            self.window.ui.tabWidget.setCurrentIndex(1)
         except Exception as ex:
             self.window.show_error(ex)
             idx = self.model.indexFromItem(row[0])

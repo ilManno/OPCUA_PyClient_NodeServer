@@ -1,9 +1,9 @@
 import logging
 import sys
 
-from PyQt5.QtCore import QTimer, Qt, QSettings, QItemSelection, QCoreApplication
+from PyQt5.QtCore import QTimer, Qt, QSettings, QItemSelection, QCoreApplication, QSignalBlocker
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QFont
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QListWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QListWidgetItem, QPushButton
 
 from opcua import ua
 
@@ -74,6 +74,7 @@ class Window(QMainWindow):
         self.setup_context_menu_tree()
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_refs)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
+        self.ui.treeView.selectionModel().selectionChanged.connect(self.select_card)
 
         # Context Menu
         self.ui.actionCopyPath.triggered.connect(self.tree_ui.copy_path)
@@ -96,6 +97,7 @@ class Window(QMainWindow):
 
         # Cards Widget
         self.datachangecards = []
+        self.ui.scadaWidget.currentRowChanged.connect(self.highlight_node)
 
         # Connection Buttons
         self.ui.connectButton.clicked.connect(self.handle_connect)
@@ -109,16 +111,18 @@ class Window(QMainWindow):
             self.restoreState(data)
 
     def show_cards(self):
-        for nodeid, object_type in self.uaclient.custom_objects.items():
+        for idx, (nodeid, object_type) in enumerate(self.uaclient.custom_objects.items()):
             cardWidget = QWidget()
             cardUi = Ui_CardWidget()
             cardUi.setupUi(cardWidget)
             cardUi.variablesView.setStyleSheet("QHeaderView::section { background-color: #fafafa; border: none; height: 20px; }")
+            cardUi.variablesView.clicked.connect(self.highlight_card)
 
             model = QStandardItemModel()
-            model.setHorizontalHeaderLabels(['', ''])
+            model.setHorizontalHeaderLabels(["", "", ""])
             cardUi.variablesView.setModel(model)
-            cardUi.variablesView.setColumnWidth(0, 120)
+            cardUi.variablesView.setColumnWidth(0, 150)
+            cardUi.variablesView.setColumnWidth(1, 150)
 
             width = 80
             height = 80
@@ -127,10 +131,28 @@ class Window(QMainWindow):
             cardUi.icon.setPixmap(QPixmap(icon).scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             cardUi.icon.setAlignment(Qt.AlignCenter)
 
-            variables = self.uaclient.get_node(nodeid).get_children()
+            font = QFont()
+            font.setPointSize(11)
+            font.setBold(True)
+
+            obj = self.uaclient.get_node(nodeid)
+            display_name = QStandardItem(obj.get_display_name().to_string())
+            display_name.setFont(font)
+            nodeid = nodeid.to_string()
+
+            cardWidget.setObjectName(f"{idx}|{nodeid}")
+
+            nodeid = QStandardItem(nodeid)
+            nodeid.setFont(font)
+            model.appendRow([display_name, nodeid, QStandardItem("")])
+
+            model.appendRow(QStandardItem(""))
+
+            variables = obj.get_children()
 
             d_rows = []
             p_rows = []
+            obj_name = ["unsubscribe"]
 
             for var in variables:
                 if var.get_node_class() == ua.NodeClass.Variable:
@@ -140,6 +162,7 @@ class Window(QMainWindow):
                     row[0].setData(var)
                     if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
                         # Data Variable
+                        obj_name.append(var.nodeid.to_string())
                         d_rows.append(row)
                         datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
                         datachangecard_ui.subscribe(var, row[0])
@@ -148,14 +171,19 @@ class Window(QMainWindow):
                         # Property
                         p_rows.append(row)
 
-            font = QFont()
+            updateButton = QPushButton()
+            updateButton.setObjectName("|".join(obj_name))
+            updateButton.setIcon(QIcon("icons/update.svg"))
+            updateButton.setToolTip("Stop update")
+            updateButton.clicked.connect(self.handle_subscribe)
+            cardUi.variablesView.setIndexWidget(model.index(0, 2), updateButton)
+
             font.setPointSize(10)
-            font.setBold(True)
-            font.setUnderline(True)
+            font.setItalic(True)
 
             p_header = QStandardItem("Properties")
             p_header.setFont(font)
-            d_header = QStandardItem("Data Values")
+            d_header = QStandardItem("Data Variables")
             d_header.setFont(font)
 
             model.appendRow(p_header)
@@ -173,6 +201,39 @@ class Window(QMainWindow):
             item.setSizeHint(cardWidget.sizeHint())
             self.ui.scadaWidget.addItem(item)
             self.ui.scadaWidget.setItemWidget(item, cardWidget)
+
+    def highlight_card(self):
+        card = self.ui.scadaWidget.sender().parent().parent()
+        index = int(card.objectName().split("|")[0])
+        self.ui.scadaWidget.setCurrentRow(index)
+
+    def highlight_node(self, row):
+        if row != -1:
+            card = self.ui.scadaWidget.itemWidget(self.ui.scadaWidget.currentItem())
+            nodeid = card.objectName().split("|")[1]
+            self.tree_ui.expand_to_node(self.uaclient.client.get_node(nodeid))
+
+    def handle_subscribe(self):
+        button = self.ui.scadaWidget.sender()
+        action, *nodeids = button.objectName().split("|")
+        if action == "unsubscribe":
+            action = "subscribe"
+            for nodeid in nodeids:
+                node = self.uaclient.get_node(nodeid)
+                self.uaclient.unsubscribe_datachange(node)
+                action += f"|{nodeid}"
+            button.setObjectName(action)
+            button.setIcon(QIcon("icons/noupdate.svg"))
+            button.setToolTip("Enable update")
+        else:
+            action = "unsubscribe"
+            for nodeid in nodeids:
+                node = self.uaclient.get_node(nodeid)
+                self.uaclient.subscribe_datachange(node)
+                action += f"|{nodeid}"
+            button.setObjectName(action)
+            button.setIcon(QIcon("icons/update.svg"))
+            button.setToolTip("Stop update")
 
     @trycatchslot
     def show_options_dialog(self):
@@ -205,7 +266,6 @@ class Window(QMainWindow):
         if isinstance(selection, QItemSelection):
             if not selection.indexes():  # no selection
                 return
-
         node = self.get_current_node()
         if node:
             self.refs_ui.show_refs(node)
@@ -215,10 +275,26 @@ class Window(QMainWindow):
         if isinstance(selection, QItemSelection):
             if not selection.indexes():  # no selection
                 return
-
         node = self.get_current_node()
         if node:
             self.attrs_ui.show_attrs(node)
+
+    def select_card(self, selection):
+        if isinstance(selection, QItemSelection):
+            if not selection.indexes():  # no selection
+                return
+        node = self.get_current_node()
+        if node and node.get_parent():
+            if node.nodeid in self.uaclient.custom_objects or node.get_parent().nodeid in self.uaclient.custom_objects:
+                nodeid = node.nodeid.to_string()
+                parent_nodeid = node.get_parent().nodeid.to_string()
+                for i in range(self.ui.scadaWidget.count()):
+                    card = self.ui.scadaWidget.itemWidget(self.ui.scadaWidget.item(i))
+                    card_nodeid = card.objectName().split("|")[1]
+                    if card_nodeid == nodeid or card_nodeid == parent_nodeid:
+                        blocker = QSignalBlocker(self.ui.scadaWidget)
+                        self.ui.scadaWidget.setCurrentRow(i)
+                        break
 
     def show_error(self, msg):
         logger.warning("showing error: %s")
@@ -245,22 +321,21 @@ class Window(QMainWindow):
         self.uaclient.load_security_settings(uri)
         try:
             self.uaclient.connect(uri)
+            self._update_address_list(uri)
+            self.uaclient.find_custom_objects()
+            self.show_cards()
+            self.tree_ui.set_root_node(self.uaclient.client.get_root_node())
+            self.ui.treeView.setFocus()
+            self.load_current_node()
+            self.ui.connectButton.setText("Disconnect")
+            self.ui.connectButton.setEnabled(True)
+            self.ui.optionsButton.setEnabled(False)
+            self.ui.addrComboBox.setEnabled(False)
         except Exception as ex:
             self.ui.connectButton.setText("Connect")
             self.ui.connectButton.setEnabled(True)
             self.show_error(ex)
             raise
-
-        self._update_address_list(uri)
-        self.uaclient.find_custom_objects()
-        self.show_cards()
-        self.tree_ui.set_root_node(self.uaclient.client.get_root_node())
-        self.ui.treeView.setFocus()
-        self.load_current_node()
-        self.ui.connectButton.setText("Disconnect")
-        self.ui.connectButton.setEnabled(True)
-        self.ui.optionsButton.setEnabled(False)
-        self.ui.addrComboBox.setEnabled(False)
 
     def _update_address_list(self, uri):
         if uri in self._address_list:
@@ -356,7 +431,7 @@ class Window(QMainWindow):
         # Method action
         self.ui.actionCall.setEnabled(node.get_node_class() == ua.NodeClass.Method)
         # DataChange actions
-        if node.get_node_class() != ua.NodeClass.Variable:
+        if node.get_node_class() != ua.NodeClass.Variable or node.get_parent().nodeid in self.uaclient.custom_objects:
             self.ui.actionSubscribeDataChange.setEnabled(False)
             self.ui.actionUnsubscribeDataChange.setEnabled(False)
         else:
