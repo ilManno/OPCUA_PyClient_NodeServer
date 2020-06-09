@@ -13,7 +13,7 @@ logger = logging.getLogger("__main__")
 
 class DataChangeUI(object):
 
-    def __init__(self, window, uaclient, sub_handler, custom_objects):
+    def __init__(self, window, uaclient, sub_handler):
         self.window = window
         self.uaclient = uaclient
         self._subhandler = sub_handler
@@ -22,7 +22,6 @@ class DataChangeUI(object):
         self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         self.window.ui.subView.setModel(self.model)
         self.window.ui.subView.setColumnWidth(1, 150)
-        self.custom_objects = custom_objects
 
         self.window.ui.actionSubscribeDataChange.triggered.connect(self._subscribe)
         self.window.ui.actionUnsubscribeDataChange.triggered.connect(self._unsubscribe)
@@ -88,12 +87,7 @@ class DataChangeUI(object):
             logger.warning("already subscribed to node: %s ", node)
             return
         text = str(node.get_display_name().Text)
-        try:
-            object_type = self.custom_objects[nodeid]
-            icon = get_icon(object_type)
-        except KeyError:
-            icon = "icons/object.svg"
-        row = [QStandardItem(QIcon(icon), text), QStandardItem("No Data yet"), QStandardItem("")]
+        row = [QStandardItem(QIcon("icons/object.svg"), text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
         self.subscribed_nodes.append(node)

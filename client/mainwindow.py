@@ -90,7 +90,7 @@ class Window(QMainWindow):
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
         self.sub_handler = DataChangeHandler()
-        self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler, self.uaclient.custom_objects)
+        self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler)
         self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionReload)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
@@ -221,6 +221,7 @@ class Window(QMainWindow):
             action = "subscribe"
             for nodeid in nodeids:
                 node = self.uaclient.get_node(nodeid)
+                # An alternative way could be to set MonitoringMode from Reporting to Disabled
                 self.uaclient.unsubscribe_datachange(node)
                 action += f"|{nodeid}"
             button.setObjectName(action)
@@ -230,6 +231,7 @@ class Window(QMainWindow):
             action = "unsubscribe"
             for nodeid in nodeids:
                 node = self.uaclient.get_node(nodeid)
+                # An alternative way could be to set MonitoringMode from Disabled to Reporting
                 self.uaclient.subscribe_datachange(node)
                 action += f"|{nodeid}"
             button.setObjectName(action)
