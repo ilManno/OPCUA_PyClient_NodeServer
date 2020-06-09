@@ -1,8 +1,8 @@
-let path = require("path");
+const path = require("path");
 
-let opcua = require("node-opcua");
+const opcua = require("node-opcua");
 
-let server = new opcua.OPCUAServer({
+const server = new opcua.OPCUAServer({
     port: 4334,
     resourcePath: "/UA/NodeServer",
     buildInfo: {
@@ -23,7 +23,7 @@ server.initialize(() => {
         const addressSpace = server.engine.addressSpace;
         const namespace = addressSpace.getOwnNamespace();
 
-        //Declare new Object Types
+        //Declare custom Object Types
 
         //Sensors
         const sensorType = namespace.addObjectType({
@@ -87,7 +87,7 @@ server.initialize(() => {
             decription: "An actuator that controls the flow through a pipe."
         });
 
-        //Declare new objects
+        //Declare custom objects
 
         //Folders
         const sensors = namespace.addObject({
@@ -103,83 +103,197 @@ server.initialize(() => {
         });
 
         // Sensors
-        // Temp Sensor
-        const tempSensor = namespace.addObject({
-            browseName: "TempSensor",
+        // Temp Sensor #1
+        const tempSensor1 = namespace.addObject({
+            browseName: "TempSensor#1",
             organizedBy: sensors,
             typeDefinition: tempSensorType
         });
 
-        const min_temp = -40
-        const max_temp = 125
-        const min_v = 2.1 
-        const max_v = 3.6      
+        let ts1_min_temp = -40
+        let ts1_max_temp = 125
+        let ts1_min_v = 2.1
+        let ts1_max_v = 3.6
         
         namespace.addVariable({
-            propertyOf: tempSensor,
-            browseName: "Min Temp",
+            propertyOf: tempSensor1,
+            browseName: "Minimum Temperature",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: min_temp
+                        value: ts1_min_temp
                     });
+                },
+                set: function(variant) {
+                    ts1_min_temp = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
-            propertyOf: tempSensor,
-            browseName: "Max Temp",
+            propertyOf: tempSensor1,
+            browseName: "Maximum Temperature",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: max_temp
+                        value: ts1_max_temp
                     });
+                },
+                set: function(variant) {
+                    ts1_max_temp = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
-            propertyOf: tempSensor,
-            browseName: "Min V",
+            propertyOf: tempSensor1,
+            browseName: "Minimum Voltage",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: min_v
+                        value: ts1_min_v
                     });
+                },
+                set: function(variant) {
+                    ts1_min_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
-            propertyOf: tempSensor,
-            browseName: "Max V",
+            propertyOf: tempSensor1,
+            browseName: "Maximum Voltage",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: max_v
+                        value: ts1_max_v
                     });
+                },
+                set: function(variant) {
+                    ts1_max_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
-            componentOf: tempSensor,
+            componentOf: tempSensor1,
             browseName: "Output",
             dataType: "Double",
             value: {
                 get: function() {
                     return new opcua.Variant({
                         dataType: opcua.DataType.Double,
-                        value: getRandomValue(min_temp, max_temp)
+                        value: getRandomValue(ts1_min_temp, ts1_max_temp)
+                    })
+                }
+            }
+        })
+
+        // Temp Sensor #2
+        const tempSensor2 = namespace.addObject({
+            browseName: "TempSensor#2",
+            organizedBy: sensors,
+            typeDefinition: tempSensorType
+        });
+
+        let ts2_min_temp = -20
+        let ts2_max_temp = 100
+        let ts2_min_v = 1.5
+        let ts2_max_v = 3.2
+        
+        namespace.addVariable({
+            propertyOf: tempSensor2,
+            browseName: "Minimum Temperature",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: ts2_min_temp
+                    });
+                },
+                set: function(variant) {
+                    ts2_min_temp = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: tempSensor2,
+            browseName: "Maximum Temperature",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: ts2_max_temp
+                    });
+                },
+                set: function(variant) {
+                    ts2_max_temp = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: tempSensor2,
+            browseName: "Minimum Voltage",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: ts2_min_v
+                    });
+                },
+                set: function(variant) {
+                    ts2_min_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: tempSensor2,
+            browseName: "Maximum Voltage",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: ts2_max_v
+                    });
+                },
+                set: function(variant) {
+                    ts2_max_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
+                }
+            }
+        });
+
+        namespace.addVariable({
+            componentOf: tempSensor2,
+            browseName: "Output",
+            dataType: "Double",
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(ts2_min_temp, ts2_max_temp)
                     })
                 }
             }
@@ -192,30 +306,41 @@ server.initialize(() => {
             typeDefinition: levelIndicatorType
         });
 
+        let min_work_temp = -40
+        let max_work_temp = 85
+
         namespace.addVariable({
             propertyOf: levelIndicator,
-            browseName: "Min Temp",
+            browseName: "Minimum Temperature",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: -40
+                        value: min_work_temp
                     });
+                },
+                set: function(variant) {
+                    min_work_temp = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
             propertyOf: levelIndicator,
-            browseName: "Max Temp",
+            browseName: "Maximum Temperature",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: 85
+                        value: max_work_temp
                     });
+                },
+                set: function(variant) {
+                    max_work_temp = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
@@ -240,31 +365,42 @@ server.initialize(() => {
             organizedBy: sensors,
             typeDefinition: flowSensorType
         });
+        
+        let fs_min_v = 4.5
+        let fs_max_v = 24
 
         namespace.addVariable({
             propertyOf: flowSensor,
-            browseName: "Min V",
+            browseName: "Minimum Voltage",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: 4.5
+                        value: fs_min_v
                     });
+                },
+                set: function(variant) {
+                    fs_min_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
             propertyOf: flowSensor,
-            browseName: "Max V",
+            browseName: "Maximum Voltage",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: 24
+                        value: fs_max_v
                     });
+                },
+                set: function(variant) {
+                    fs_max_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
@@ -291,6 +427,8 @@ server.initialize(() => {
             typeDefinition: boilerType
         });
 
+        let nominal_pow = 3
+
         namespace.addVariable({
             propertyOf: boiler,
             browseName: "Nominal Power",
@@ -299,8 +437,12 @@ server.initialize(() => {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: 3
+                        value: nominal_pow
                     });
+                },
+                set: function(variant) {
+                    nominal_pow = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
@@ -319,43 +461,54 @@ server.initialize(() => {
             }
         })
 
-        // Motor
-        const motor = namespace.addObject({
-            browseName: "Motor",
+        // Motor#1
+        const motor1 = namespace.addObject({
+            browseName: "Motor#1",
             organizedBy: actuators,
             typeDefinition: motorType
         });
 
+        let m1_work_v = 24
+        let m1_exit_speed = 6500
+
         namespace.addVariable({
-            propertyOf: motor,
-            browseName: "Voltage",
+            propertyOf: motor1,
+            browseName: "Working Voltage",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: 24
+                        value: m1_work_v
                     });
+                },
+                set: function(variant) {
+                    m1_work_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
-            propertyOf: motor,
+            propertyOf: motor1,
             browseName: "Exit Speed",
             dataType: "Double",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: 6500
+                        value: m1_exit_speed
                     });
+                },
+                set: function(variant) {
+                    m1_exit_speed = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
 
         namespace.addVariable({
-            componentOf: motor,
+            componentOf: motor1,
             browseName: "Input",
             dataType: "Double",
             value: {
@@ -368,12 +521,75 @@ server.initialize(() => {
             }
         })
 
+        // Motor#2
+        const motor2 = namespace.addObject({
+            browseName: "Motor#2",
+            organizedBy: actuators,
+            typeDefinition: motorType
+        });
+
+        let m2_work_v = 32
+        let m2_exit_speed = 7000
+
+        namespace.addVariable({
+            propertyOf: motor2,
+            browseName: "Working Voltage",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: m2_work_v
+                    });
+                },
+                set: function(variant) {
+                    m2_work_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
+                }
+            }
+        });
+
+        namespace.addVariable({
+            propertyOf: motor2,
+            browseName: "Exit Speed",
+            dataType: "Double",
+            value: {
+                get: function() { 
+                    return new opcua.Variant({ 
+                        dataType: opcua.DataType.Double, 
+                        value: m2_exit_speed
+                    });
+                },
+                set: function(variant) {
+                    m2_exit_speed = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
+                }
+            }
+        });
+
+        namespace.addVariable({
+            componentOf: motor2,
+            browseName: "Input",
+            dataType: "Double",
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(0, 30)
+                    })
+                }
+            }
+        })
+
         // Valve
         const valve = namespace.addObject({
             browseName: "Valve",
             organizedBy: actuators,
             typeDefinition: valveType
         });
+
+        let exit_v = 330
+        let base_type = "B9A"
 
         namespace.addVariable({
             propertyOf: valve,
@@ -383,8 +599,12 @@ server.initialize(() => {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.Double, 
-                        value: 330
+                        value: exit_v
                     });
+                },
+                set: function(variant) {
+                    exit_v = parseFloat(variant.value);
+                    return opcua.StatusCodes.Good;
                 }
             }
         });
@@ -392,13 +612,17 @@ server.initialize(() => {
         namespace.addVariable({
             propertyOf: valve,
             browseName: "Base Type",
-            dataType: "Double",
+            dataType: "String",
             value: {
                 get: function() { 
                     return new opcua.Variant({ 
                         dataType: opcua.DataType.String, 
-                        value: "B9A"
+                        value: base_type
                     });
+                },
+                set: function(variant) {
+                    base_type = variant.value;
+                    return opcua.StatusCodes.Good;
                 }
             }
         });

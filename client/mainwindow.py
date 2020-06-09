@@ -160,13 +160,14 @@ class Window(QMainWindow):
                     value = str(var.get_value())
                     row = [QStandardItem(name), QStandardItem(value)]
                     row[0].setData(var)
+                    # Add monitored item to subscription
+                    obj_name.append(var.nodeid.to_string())
+                    datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
+                    datachangecard_ui.subscribe(var, row[0])
+                    self.datachangecards.append(datachangecard_ui)
                     if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
                         # Data Variable
-                        obj_name.append(var.nodeid.to_string())
                         d_rows.append(row)
-                        datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
-                        datachangecard_ui.subscribe(var, row[0])
-                        self.datachangecards.append(datachangecard_ui)
                     else:
                         # Property
                         p_rows.append(row)
@@ -450,7 +451,7 @@ def main():
     handler = QtHandler(client.ui.logTextEdit)
     logging.getLogger().addHandler(handler)
     logging.getLogger(__name__).setLevel(logging.INFO)
-    logging.getLogger("uawidgets").setLevel(logging.INFO)
+    logging.getLogger("widgets").setLevel(logging.INFO)
     # logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua client library
    
     client.show()
