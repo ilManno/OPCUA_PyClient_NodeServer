@@ -3,14 +3,14 @@ import subprocess
 
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox
 
-from dialogs.options_ui import Ui_OptionsDialog
+from dialogs.connect_options_ui import Ui_ConnectOptionsDialog
 from utils import trycatchslot
 
 
-class OptionsDialog(QDialog):
+class ConnectOptionsDialog(QDialog):
     def __init__(self, endpoints_dict, security_mode, security_policy, certificate_path, private_key_path):
         super().__init__()
-        self.ui = Ui_OptionsDialog()
+        self.ui = Ui_ConnectOptionsDialog()
         self.ui.setupUi(self)
 
         self.endpoints_dict = endpoints_dict

@@ -8,7 +8,7 @@ from opcua import ua, Node
 from utils import trycatchslot
 
 
-logger = logging.getLogger("__main__")
+logger = logging.getLogger(__name__)
 
 
 class DataChangeCardUI(object):

@@ -6,9 +6,9 @@ from PyQt5.QtWidgets import QMenu, QAction
 
 from opcua import ua, Node
 
-from utils import trycatchslot, get_icon
+from utils import trycatchslot
 
-logger = logging.getLogger("__main__")
+logger = logging.getLogger(__name__)
 
 
 class DataChangeUI(object):

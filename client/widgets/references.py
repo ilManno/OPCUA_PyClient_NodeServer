@@ -2,7 +2,7 @@ import logging
 
 from PyQt5.QtCore import pyqtSignal, QObject, QSettings, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QMenu, QAction, QAbstractItemView
+from PyQt5.QtWidgets import QMenu, QAction
 
 from opcua import ua, Node
 

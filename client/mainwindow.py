@@ -18,7 +18,9 @@ from widgets.tree import TreeWidget
 from widgets.sub_handler import DataChangeHandler
 from utils import trycatchslot, get_icon
 
-from dialogs.options import OptionsDialog
+from dialogs.connect_options import ConnectOptionsDialog
+from dialogs.sub_options import SubOptionsDialog
+from dialogs.mi_options import MiOptionsDialog
 from mainwindow_ui import Ui_MainWindow
 from client import UaClient
 
@@ -248,16 +250,17 @@ class Window(QMainWindow):
             self.show_error(ex)
             raise
 
-        # Create dict of endpoints
-        endpoints_dict = {"None_": set(), "Sign": set(), "SignAndEncrypt": set()}
+        # Create dict of endpoints with security modes as keys and security policies as values
+        endpoints_dict = {"None_": [], "Sign": [], "SignAndEncrypt": []}
         for edp in endpoints:
-            mode = edp.SecurityMode.name
-            policy = edp.SecurityPolicyUri.split("#")[1]
-            endpoints_dict[mode].add(policy)
+            if edp.TransportProfileUri == "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary":
+                mode = edp.SecurityMode.name
+                policy = edp.SecurityPolicyUri.split("#")[1]
+                endpoints_dict[mode].append(policy)
         # Load security settings
         self.uaclient.load_security_settings(uri)
         # Init Dialog with current settings
-        dia = OptionsDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path)
+        dia = ConnectOptionsDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path)
         ret = dia.exec_()
         if ret:
             self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
@@ -272,7 +275,7 @@ class Window(QMainWindow):
         node = self.get_current_node()
         if node:
             self.refs_ui.show_refs(node)
-    
+
     @trycatchslot
     def show_attrs(self, selection):
         if isinstance(selection, QItemSelection):
@@ -324,6 +327,16 @@ class Window(QMainWindow):
         self.uaclient.load_security_settings(uri)
         try:
             self.uaclient.connect(uri)
+            # Load subscription settings
+            self.uaclient.load_subscription_settings(uri)
+            self.configure_subscription()
+            # Save subscription settings
+            self.uaclient.save_subscription_settings(uri)
+            # Load monitored items settings
+            #self.uaclient.load_subscription_settings(uri)
+            self.configure_monitored_items()
+            # Save monitored items settings
+            #self.uaclient.save_subscription_settings(uri)
             self._update_address_list(uri)
             self.uaclient.find_custom_objects()
             self.show_cards()
@@ -339,6 +352,26 @@ class Window(QMainWindow):
             self.ui.connectButton.setEnabled(True)
             self.show_error(ex)
             raise
+
+    def configure_subscription(self):
+        # Init Dialog with current settings
+        dia = SubOptionsDialog(self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount,
+                               self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish)
+        ret = dia.exec_()
+        if ret:
+            self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount, \
+            self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish = dia.get_selected_options()
+
+    def configure_monitored_items(self):
+        # Init Dialog with current settings
+        dia = MiOptionsDialog(self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest,
+                              self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger,
+                              self.uaclient.deadbandType, self.uaclient.deadbandValue)
+        ret = dia.exec_()
+        if ret:
+            self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest, \
+            self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger, self.uaclient.deadbandType, \
+            self.uaclient.deadbandValue = dia.get_selected_options()
 
     def _update_address_list(self, uri):
         if uri in self._address_list:
@@ -455,7 +488,7 @@ def main():
     logging.getLogger(__name__).setLevel(logging.INFO)
     logging.getLogger("widgets").setLevel(logging.INFO)
     # logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua client library
-   
+
     client.show()
     sys.exit(app.exec_())
 

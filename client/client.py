@@ -6,7 +6,7 @@ from opcua import crypto, ua, Client
 from opcua.tools import endpoint_to_strings
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("__main__")
 
 
 class UaClient:
@@ -15,12 +15,30 @@ class UaClient:
         self.settings = QSettings()
         self.client = None
         self._connected = False
+        # Subscription
         self._datachange_sub = None
+        self.publishingEnabled = True  # Not necessary
+        self.requestedPublishingInterval = 500
+        self.requestedMaxKeepAliveCount = 3000
+        self.requestedLifetimeCount = 10000
+        self.maxNotificationsPerPublish = 10000
+        self.priority = 0  # Not necessary
+        # Monitored items
         self._subs_dc = {}
+        self._client_handle = 0
+        self.samplingInterval = 250
+        self.queueSize = 0
+        self.discardOldest = True
+        self.dataChangeFilter = False
+        self.dataChangeTrigger = ua.DataChangeTrigger.StatusValue  # Status = 0, StatusValue = 1, StatusValueTimestamp = 2
+        self.deadbandType = ua.DeadbandType.None_  # None_ = 0, Absolute = 1, Percent = 2
+        self.deadbandValue = 0
+        # Security
         self.security_mode = "None_"
         self.security_policy = "None"
         self.certificate_path = ""
         self.private_key_path = ""
+        # Custom objects
         self.custom_objects = {}
         self.known_custom_types = ["BoilerType", "MotorType", "ValveType",
                                    "TempSensorType", "LevelIndicatorType", "FlowSensorType"]
@@ -39,7 +57,7 @@ class UaClient:
         edps = client.connect_and_get_server_endpoints()
         for i, ep in enumerate(edps, start=1):
             logger.info('Endpoint %s:', i)
-            for (n, v) in endpoint_to_strings(ep):
+            for n, v in endpoint_to_strings(ep):
                 logger.info('  %s: %s', n, v)
             logger.info('')
         return edps
@@ -76,9 +94,16 @@ class UaClient:
 
     def subscribe_datachange(self, node, handler=None):
         if not self._datachange_sub:
-            publishing_interval = 500
+            # Set subscription parameters
+            params = ua.CreateSubscriptionParameters()
+            params.PublishingEnabled = self.publishingEnabled
+            params.RequestedPublishingInterval = self.requestedPublishingInterval
+            params.RequestedMaxKeepAliveCount = self.requestedMaxKeepAliveCount
+            params.RequestedLifetimeCount = self.requestedLifetimeCount
+            params.MaxNotificationsPerPublish = self.maxNotificationsPerPublish
+            params.Priority = self.priority
             # Create new subscription
-            self._datachange_sub = self.client.create_subscription(publishing_interval, handler)
+            self._datachange_sub = self.client.create_subscription(params, handler)
         # Subscribe for data change events for node
         # This will create a new monitored item in subscription
         handle = self._datachange_sub.subscribe_data_change(node)
@@ -89,6 +114,40 @@ class UaClient:
         # This will remove the corresponding monitored item from subscription
         self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
         del self._subs_dc[node.nodeid]
+
+    def create_monitored_items(self, nodes):
+        monitored_items = []
+        if not isinstance(nodes, list):
+            nodes = [nodes]
+        for node in nodes:
+            # Set item to monitor
+            rv = ua.ReadValueId()
+            rv.NodeId = node.nodeid
+            rv.AttributeId = ua.AttributeIds.Value
+            # Set monitoring parameters
+            mparams = ua.MonitoringParameters()
+            mparams.ClientHandle = self._client_handle
+            self._client_handle += 1
+            mparams.SamplingInterval = self.samplingInterval
+            mparams.QueueSize = self.queueSize
+            mparams.DiscardOldest = self.discardOldest
+            # Create monitored item filter
+            if self.dataChangeFilter:
+                mfilter = ua.DataChangeFilter()
+                mfilter.Trigger = self.dataChangeTrigger
+                mfilter.DeadbandType = self.deadbandType
+                mfilter.DeadbandValue = self.deadbandValue  # absolute float value or from 0 to 100 for percentage deadband
+            else:
+                mfilter = None
+            mparams.Filter = mfilter
+            # Create monitored item request
+            mir = ua.MonitoredItemCreateRequest()
+            mir.ItemToMonitor = rv
+            mir.MonitoringMode = ua.MonitoringMode.Reporting
+            mir.RequestedParameters = mparams
+            # Append to list
+            monitored_items.append(mir)
+        self._datachange_sub.create_monitored_items(monitored_items)
 
     def delete_subscription(self):
         if self._datachange_sub:
@@ -103,20 +162,29 @@ class UaClient:
         return self.client.get_node(nodeid)
 
     def find_custom_objects(self):
-        # Get all children of objects node
-        # By default hierarchical references and all node classes are returned
-        objects = self.client.get_objects_node().get_children()
-        for obj in objects:
-            if obj.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.FolderType):
-                folder_name = obj.get_display_name().to_string()
+        """
+        Function that populates custom_objects dictionary,
+        with nodeids of custom objects as keys and
+        string representations of their types as values
+        """
+        # Get Objects folder
+        objects_folder = self.client.get_objects_node()
+        # Get Organize references to objects inside folder
+        descriptions = objects_folder.get_references(ua.ObjectIds.Organizes, ua.BrowseDirection.Forward, ua.NodeClass.Object, False)
+        for desc in descriptions:
+            if desc.TypeDefinition == ua.TwoByteNodeId(ua.ObjectIds.FolderType):
+                folder_name = desc.DisplayName.Text
                 if folder_name == "Actuators" or folder_name == "Sensors":
-                    devices = obj.get_children()
-                    for dev in devices:
+                    # Get folder node
+                    folder_node = self.get_node(desc.NodeId)
+                    # Get all objects inside folder
+                    objects = folder_node.get_children(ua.ObjectIds.Organizes, ua.NodeClass.Object)
+                    for obj in objects:
                         # Get HasTypeDefinition references
-                        references = dev.get_children_descriptions(refs=ua.ObjectIds.HasTypeDefinition)
-                        custom_type = references[0].DisplayName.to_string()
+                        ref = obj.get_references(ua.ObjectIds.HasTypeDefinition, ua.BrowseDirection.Forward, ua.NodeClass.ObjectType, False)[0]
+                        custom_type = ref.DisplayName.Text
                         if custom_type in self.known_custom_types:
-                            self.custom_objects[dev.nodeid] = custom_type
+                            self.custom_objects[obj.nodeid] = custom_type
 
     def load_security_settings(self, uri):
         mysettings = self.settings.value("security_settings", None)
@@ -141,3 +209,27 @@ class UaClient:
                            self.certificate_path,
                            self.private_key_path]
         self.settings.setValue("security_settings", mysettings)
+
+    def load_subscription_settings(self, uri):
+        mysettings = self.settings.value("subscription_settings", None)
+        if mysettings is not None and uri in mysettings:
+            pub_interval, max_keepalive_count, lifetime_count, max_notifications = mysettings[uri]
+            self.requestedPublishingInterval = pub_interval
+            self.requestedMaxKeepAliveCount = max_keepalive_count
+            self.requestedLifetimeCount = lifetime_count
+            self.maxNotificationsPerPublish = max_notifications
+        else:
+            self.requestedPublishingInterval = 500
+            self.requestedMaxKeepAliveCount = 3000
+            self.requestedLifetimeCount = 10000
+            self.maxNotificationsPerPublish = 10000
+
+    def save_subscription_settings(self, uri):
+        mysettings = self.settings.value("subscription_settings", None)
+        if mysettings is None:
+            mysettings = {}
+        mysettings[uri] = [self.requestedPublishingInterval,
+                           self.requestedMaxKeepAliveCount,
+                           self.requestedLifetimeCount,
+                           self.maxNotificationsPerPublish]
+        self.settings.setValue("subscription_settings", mysettings)
