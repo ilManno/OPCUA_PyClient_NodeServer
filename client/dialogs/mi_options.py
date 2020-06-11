@@ -5,22 +5,22 @@ from utils import trycatchslot
 
 
 class MiOptionsDialog(QDialog):
-    def __init__(self, sampling_interval, queue_size, discard_oldest, filter, datachange_trigger, deadband_type, deadband_value):
+    def __init__(self, sampling_interval, queue_size, discard_oldest, data_change_filter, datachange_trigger, deadband_type, deadband_value):
         super().__init__()
         self.ui = Ui_MiOptionsDialog()
         self.ui.setupUi(self)
 
-        self._init_fields(sampling_interval, queue_size, discard_oldest, filter, datachange_trigger, deadband_type, deadband_value)
+        self._init_fields(sampling_interval, queue_size, discard_oldest, data_change_filter, datachange_trigger, deadband_type, deadband_value)
 
         self.ui.dataChangeFilter.clicked.connect(self.enable_filter)
         self.ui.saveButton.clicked.connect(self.accept)
 
     @trycatchslot
-    def _init_fields(self, sampling_interval, queue_size, discard_oldest, filter, datachange_trigger, deadband_type, deadband_value):
+    def _init_fields(self, sampling_interval, queue_size, discard_oldest, data_change_filter, datachange_trigger, deadband_type, deadband_value):
         self.ui.samplingInterval.setValue(sampling_interval)
         self.ui.queueSize.setValue(queue_size)
         self.ui.discardOldest.setChecked(discard_oldest)
-        self.ui.dataChangeFilter.setChecked(filter)
+        self.ui.dataChangeFilter.setChecked(data_change_filter)
         self.ui.dataChangeTrigger.addItems(["Status", "Status/Value", "Status/Value/Timestamp"])
         self.ui.dataChangeTrigger.setCurrentIndex(datachange_trigger)
         self.ui.deadbandType.addItems(["None", "Absolute", "Percent"])

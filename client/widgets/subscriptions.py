@@ -70,7 +70,7 @@ class DataChangeUI(object):
 
     def clear(self):
         self.subscribed_nodes = []
-        # remove all rows but not header!!
+        # remove all rows but not header
         self.model.removeRows(0, self.model.rowCount())
 
     def show_error(self, *args):
@@ -92,7 +92,7 @@ class DataChangeUI(object):
         self.model.appendRow(row)
         self.subscribed_nodes.append(node)
         try:
-            self.uaclient.subscribe_datachange(node, self._subhandler)
+            self.uaclient.create_monitored_items(node, self._subhandler)
             self.window.ui.tabWidget.setCurrentIndex(1)
         except Exception as ex:
             self.window.show_error(ex)
@@ -106,7 +106,7 @@ class DataChangeUI(object):
             node = self.window.get_current_node()
         if node is None:
             return
-        self.uaclient.unsubscribe_datachange(node)
+        self.uaclient.remove_monitored_item(node)
         self.subscribed_nodes.remove(node)
         i = 0
         while self.model.item(i):

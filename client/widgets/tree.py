@@ -137,7 +137,7 @@ class TreeViewModel(QStandardItemModel):
         self.custom_objects = custom_objects
 
     def clear(self):
-        # remove all rows but not header!!
+        # remove all rows but not header
         self.removeRows(0, self.rowCount())
         self._fetched = []
 

@@ -150,29 +150,25 @@ class Window(QMainWindow):
 
             model.appendRow(QStandardItem(""))
 
-            variables = obj.get_children()
+            variables = obj.get_children(ua.ObjectIds.Aggregates, ua.NodeClass.Variable)
 
             d_rows = []
             p_rows = []
             obj_name = ["unsubscribe"]
 
             for var in variables:
-                if var.get_node_class() == ua.NodeClass.Variable:
-                    name = var.get_display_name().to_string()
-                    value = str(var.get_value())
-                    row = [QStandardItem(name), QStandardItem(value)]
-                    row[0].setData(var)
-                    # Add monitored item to subscription
-                    obj_name.append(var.nodeid.to_string())
-                    datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
-                    datachangecard_ui.subscribe(var, row[0])
-                    self.datachangecards.append(datachangecard_ui)
-                    if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
-                        # Data Variable
-                        d_rows.append(row)
-                    else:
-                        # Property
-                        p_rows.append(row)
+                name = var.get_display_name().to_string()
+                value = str(var.get_value())
+                row = [QStandardItem(name), QStandardItem(value)]
+                row[0].setData(var)
+                # Add monitored item to subscription
+                obj_name.append(var.nodeid.to_string())
+                if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
+                    # Data Variable
+                    d_rows.append(row)
+                else:
+                    # Property
+                    p_rows.append(row)
 
             updateButton = QPushButton()
             updateButton.setObjectName("|".join(obj_name))
@@ -200,6 +196,10 @@ class Window(QMainWindow):
             for d_row in d_rows:
                 model.appendRow(d_row)
 
+            datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
+            datachangecard_ui.subscribe(variables)
+            self.datachangecards.append(datachangecard_ui)
+
             item = QListWidgetItem()
             item.setSizeHint(cardWidget.sizeHint())
             self.ui.scadaWidget.addItem(item)
@@ -224,7 +224,7 @@ class Window(QMainWindow):
             for nodeid in nodeids:
                 node = self.uaclient.get_node(nodeid)
                 # An alternative way could be to set MonitoringMode from Reporting to Disabled
-                self.uaclient.unsubscribe_datachange(node)
+                self.uaclient.remove_monitored_item(node)
                 action += f"|{nodeid}"
             button.setObjectName(action)
             button.setIcon(QIcon("icons/noupdate.svg"))
@@ -234,7 +234,7 @@ class Window(QMainWindow):
             for nodeid in nodeids:
                 node = self.uaclient.get_node(nodeid)
                 # An alternative way could be to set MonitoringMode from Disabled to Reporting
-                self.uaclient.subscribe_datachange(node)
+                self.uaclient.create_monitored_items(node)
                 action += f"|{nodeid}"
             button.setObjectName(action)
             button.setIcon(QIcon("icons/update.svg"))
@@ -246,26 +246,26 @@ class Window(QMainWindow):
         try:
             # Query Endpoints
             endpoints = self.uaclient.get_endpoints(uri)
+            # Create dict of endpoints with security modes as keys and security policies as values
+            endpoints_dict = {"None_": [], "Sign": [], "SignAndEncrypt": []}
+            for edp in endpoints:
+                if edp.TransportProfileUri == "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary":
+                    mode = edp.SecurityMode.name
+                    policy = edp.SecurityPolicyUri.split("#")[1]
+                    endpoints_dict[mode].append(policy)
+            # Load security settings
+            self.uaclient.load_security_settings(uri)
+            # Init Dialog with current settings
+            dia = ConnectOptionsDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy,
+                                       self.uaclient.certificate_path, self.uaclient.private_key_path)
+            ret = dia.exec_()
+            if ret:
+                self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
+                self.uaclient.save_security_settings(uri)
+                self.connect()
         except Exception as ex:
             self.show_error(ex)
             raise
-
-        # Create dict of endpoints with security modes as keys and security policies as values
-        endpoints_dict = {"None_": [], "Sign": [], "SignAndEncrypt": []}
-        for edp in endpoints:
-            if edp.TransportProfileUri == "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary":
-                mode = edp.SecurityMode.name
-                policy = edp.SecurityPolicyUri.split("#")[1]
-                endpoints_dict[mode].append(policy)
-        # Load security settings
-        self.uaclient.load_security_settings(uri)
-        # Init Dialog with current settings
-        dia = ConnectOptionsDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path)
-        ret = dia.exec_()
-        if ret:
-            self.uaclient.security_mode, self.uaclient.security_policy, self.uaclient.certificate_path, self.uaclient.private_key_path = dia.get_selected_options()
-            self.uaclient.save_security_settings(uri)
-            self.handle_connect()
 
     @trycatchslot
     def show_refs(self, selection):
@@ -325,18 +325,18 @@ class Window(QMainWindow):
         self.ui.connectButton.repaint()
         uri = self.ui.addrComboBox.currentText()
         self.uaclient.load_security_settings(uri)
+        # Subscription settings
+        self.uaclient.load_subscription_settings(uri)
+        self.configure_subscription()
+        self.uaclient.save_subscription_settings(uri)
+        # Monitored items settings
+        self.uaclient.load_monitored_items_settings(uri)
+        self.configure_monitored_items()
+        self.uaclient.save_monitored_items_settings(uri)
         try:
+            # Connect
             self.uaclient.connect(uri)
-            # Load subscription settings
-            self.uaclient.load_subscription_settings(uri)
-            self.configure_subscription()
-            # Save subscription settings
-            self.uaclient.save_subscription_settings(uri)
-            # Load monitored items settings
-            #self.uaclient.load_subscription_settings(uri)
-            self.configure_monitored_items()
-            # Save monitored items settings
-            #self.uaclient.save_subscription_settings(uri)
+            # Show widgets
             self._update_address_list(uri)
             self.uaclient.find_custom_objects()
             self.show_cards()

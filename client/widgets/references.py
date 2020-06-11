@@ -44,7 +44,7 @@ class RefsWidget(QObject):
         self._contextMenu.exec_(self.view.viewport().mapToGlobal(position))
 
     def clear(self):
-        # remove all rows but not header!!
+        # remove all rows but not header
         self.model.removeRows(0, self.model.rowCount())
         self.node = None
 

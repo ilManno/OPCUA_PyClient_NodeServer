@@ -24,14 +24,14 @@ class UaClient:
         self.maxNotificationsPerPublish = 10000
         self.priority = 0  # Not necessary
         # Monitored items
-        self._subs_dc = {}
+        self._subs_dc = {}  # dict with nodeids as keys and handles as values
         self._client_handle = 0
         self.samplingInterval = 250
         self.queueSize = 0
         self.discardOldest = True
         self.dataChangeFilter = False
-        self.dataChangeTrigger = ua.DataChangeTrigger.StatusValue  # Status = 0, StatusValue = 1, StatusValueTimestamp = 2
-        self.deadbandType = ua.DeadbandType.None_  # None_ = 0, Absolute = 1, Percent = 2
+        self.dataChangeTrigger = ua.DataChangeTrigger.StatusValue  # 0 = Status, 1 = StatusValue, 2 = StatusValueTimestamp
+        self.deadbandType = ua.DeadbandType.None_  # 0 = None, 1 = Absolute, 2 = Percent
         self.deadbandValue = 0
         # Security
         self.security_mode = "None_"
@@ -92,30 +92,20 @@ class UaClient:
             finally:
                 self._reset()
 
-    def subscribe_datachange(self, node, handler=None):
+    def _create_subscription(self, handler):
+        # Set subscription parameters
+        params = ua.CreateSubscriptionParameters()
+        params.PublishingEnabled = self.publishingEnabled
+        params.RequestedPublishingInterval = self.requestedPublishingInterval
+        params.RequestedMaxKeepAliveCount = self.requestedMaxKeepAliveCount
+        params.RequestedLifetimeCount = self.requestedLifetimeCount
+        params.MaxNotificationsPerPublish = self.maxNotificationsPerPublish
+        params.Priority = self.priority
+        self._datachange_sub = self.client.create_subscription(params, handler)
+
+    def create_monitored_items(self, nodes, handler=None):
         if not self._datachange_sub:
-            # Set subscription parameters
-            params = ua.CreateSubscriptionParameters()
-            params.PublishingEnabled = self.publishingEnabled
-            params.RequestedPublishingInterval = self.requestedPublishingInterval
-            params.RequestedMaxKeepAliveCount = self.requestedMaxKeepAliveCount
-            params.RequestedLifetimeCount = self.requestedLifetimeCount
-            params.MaxNotificationsPerPublish = self.maxNotificationsPerPublish
-            params.Priority = self.priority
-            # Create new subscription
-            self._datachange_sub = self.client.create_subscription(params, handler)
-        # Subscribe for data change events for node
-        # This will create a new monitored item in subscription
-        handle = self._datachange_sub.subscribe_data_change(node)
-        self._subs_dc[node.nodeid] = handle
-
-    def unsubscribe_datachange(self, node):
-        # Unsubscribe to data change using the handle returned while subscribing
-        # This will remove the corresponding monitored item from subscription
-        self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
-        del self._subs_dc[node.nodeid]
-
-    def create_monitored_items(self, nodes):
+            self._create_subscription(handler)
         monitored_items = []
         if not isinstance(nodes, list):
             nodes = [nodes]
@@ -126,16 +116,19 @@ class UaClient:
             rv.AttributeId = ua.AttributeIds.Value
             # Set monitoring parameters
             mparams = ua.MonitoringParameters()
-            mparams.ClientHandle = self._client_handle
             self._client_handle += 1
+            mparams.ClientHandle = self._client_handle
             mparams.SamplingInterval = self.samplingInterval
             mparams.QueueSize = self.queueSize
             mparams.DiscardOldest = self.discardOldest
             # Create monitored item filter
             if self.dataChangeFilter:
                 mfilter = ua.DataChangeFilter()
-                mfilter.Trigger = self.dataChangeTrigger
-                mfilter.DeadbandType = self.deadbandType
+                mfilter.Trigger = ua.DataChangeTrigger(self.dataChangeTrigger)
+                if node.get_data_value().Value.VariantType != ua.VariantType.String:
+                    mfilter.DeadbandType = self.deadbandType
+                else:
+                    mfilter.DeadbandType = ua.DeadbandType.None_
                 mfilter.DeadbandValue = self.deadbandValue  # absolute float value or from 0 to 100 for percentage deadband
             else:
                 mfilter = None
@@ -147,7 +140,26 @@ class UaClient:
             mir.RequestedParameters = mparams
             # Append to list
             monitored_items.append(mir)
-        self._datachange_sub.create_monitored_items(monitored_items)
+        handles = self._datachange_sub.create_monitored_items(monitored_items)
+        for i in range(len(handles)):
+            handle = handles[i]
+            if type(handle) == ua.StatusCode:
+                handle.check()
+            self._subs_dc[nodes[i].nodeid] = handle
+
+    """
+    def subscribe_datachange(self, node):
+        # Subscribe for data change events for node
+        # This will create a new monitored item in subscription
+        handle = self._datachange_sub.subscribe_data_change(node)
+        self._subs_dc[node.nodeid] = handle
+    """
+
+    def remove_monitored_item(self, node):
+        # Unsubscribe to data change using the handle stored while creating monitored item
+        # This will remove the corresponding monitored item from subscription
+        self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
+        del self._subs_dc[node.nodeid]
 
     def delete_subscription(self):
         if self._datachange_sub:
@@ -233,3 +245,36 @@ class UaClient:
                            self.requestedLifetimeCount,
                            self.maxNotificationsPerPublish]
         self.settings.setValue("subscription_settings", mysettings)
+
+    def load_monitored_items_settings(self, uri):
+        mysettings = self.settings.value("monitored_items_settings", None)
+        if mysettings is not None and uri in mysettings:
+            sampling_interval, queue_size, discard_oldest, data_change_filter, trigger, deadband_type, deadband_value = mysettings[uri]
+            self.samplingInterval = sampling_interval
+            self.queueSize = queue_size
+            self.discardOldest = discard_oldest
+            self.dataChangeFilter = data_change_filter
+            self.dataChangeTrigger = trigger
+            self.deadbandType = deadband_type
+            self.deadbandValue = deadband_value
+        else:
+            self.samplingInterval = 250
+            self.queueSize = 0
+            self.discardOldest = True
+            self.dataChangeFilter = False
+            self.dataChangeTrigger = ua.DataChangeTrigger.StatusValue
+            self.deadbandType = ua.DeadbandType.None_
+            self.deadbandValue = 0
+
+    def save_monitored_items_settings(self, uri):
+        mysettings = self.settings.value("monitored_items_settings", None)
+        if mysettings is None:
+            mysettings = {}
+        mysettings[uri] = [self.samplingInterval,
+                           self.queueSize,
+                           self.discardOldest,
+                           self.dataChangeFilter,
+                           self.dataChangeTrigger,
+                           self.deadbandType,
+                           self.deadbandValue]
+        self.settings.setValue("monitored_items_settings", mysettings)

@@ -141,7 +141,7 @@ class AttrsWidget(QObject):
             QApplication.clipboard().setText(it.text())
 
     def clear(self):
-        # remove all rows but not header!!
+        # remove all rows but not header
         self.model.removeRows(0, self.model.rowCount())
 
     def reload(self):
