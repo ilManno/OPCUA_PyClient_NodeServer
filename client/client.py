@@ -33,8 +33,9 @@ class UaClient:
         self.dataChangeTrigger = ua.DataChangeTrigger.StatusValue  # 0 = Status, 1 = StatusValue, 2 = StatusValueTimestamp
         self.deadbandType = ua.DeadbandType.None_  # 0 = None, 1 = Absolute, 2 = Percent
         self.deadbandValue = 0
-        self.numericTypes = [ua.VariantType.Int16, ua.VariantType.UInt16, ua.VariantType.Int32, ua.VariantType.UInt32,
-                             ua.VariantType.Int64, ua.VariantType.UInt64, ua.VariantType.Float, ua.VariantType.Double]
+        self.numericTypes = [ua.VariantType.SByte, ua.VariantType.Byte, ua.VariantType.Int16, ua.VariantType.UInt16,
+                             ua.VariantType.Int32, ua.VariantType.UInt32, ua.VariantType.Int64, ua.VariantType.UInt64,
+                             ua.VariantType.Float, ua.VariantType.Double]
         # Security
         self.security_mode = "None"
         self.security_policy = "None"
@@ -50,6 +51,7 @@ class UaClient:
         self._connected = False
         self._datachange_sub = None
         self._subs_dc = {}
+        self.custom_objects = {}
 
     @staticmethod
     def get_endpoints(uri):
@@ -128,23 +130,22 @@ class UaClient:
                 mfilter = ua.DataChangeFilter()
                 mfilter.Trigger = ua.DataChangeTrigger(self.dataChangeTrigger)
                 if self.deadbandType == ua.DeadbandType.Absolute:
-                    if node.get_data_type_as_variant_type() in self.numericTypes:
+                    if node.get_data_value().Value.VariantType in self.numericTypes:
                         mfilter.DeadbandType = self.deadbandType
                         mfilter.DeadbandValue = self.deadbandValue  # absolute float value or from 0 to 100 for percentage deadband
                     else:
                         mfilter.DeadbandType = ua.DeadbandType.None_
                 elif self.deadbandType == ua.DeadbandType.Percent:
+                    has_EURange = False
                     if node.get_type_definition().Identifier == ua.object_ids.ObjectIds.AnalogItemType:
-                        properties = node.get_properties()
-                        has_EURange = False
-                        for prop in properties:
-                            if prop.get_browse_name().Name == "EURange":
+                        # Get node properties
+                        descriptions = node.get_references(ua.ObjectIds.HasProperty, ua.BrowseDirection.Forward, ua.NodeClass.Variable, False)
+                        for desc in descriptions:
+                            if desc.BrowseName.Name == "EURange" and self.get_node(desc.NodeId).get_value() is not None:
                                 has_EURange = True
-                        if has_EURange and node.get_data_type_as_variant_type() in self.numericTypes:
-                            mfilter.DeadbandType = self.deadbandType
-                            mfilter.DeadbandValue = self.deadbandValue  # absolute float value or from 0 to 100 for percentage deadband
-                        else:
-                            mfilter.DeadbandType = ua.DeadbandType.None_
+                    if has_EURange:
+                        mfilter.DeadbandType = self.deadbandType
+                        mfilter.DeadbandValue = self.deadbandValue  # absolute float value or from 0 to 100 for percentage deadband
                     else:
                         mfilter.DeadbandType = ua.DeadbandType.None_
             else:
