@@ -34,7 +34,7 @@ class UaClient:
         self.deadbandType = ua.DeadbandType.None_  # 0 = None, 1 = Absolute, 2 = Percent
         self.deadbandValue = 0
         # Security
-        self.security_mode = "None_"
+        self.security_mode = "None"
         self.security_policy = "None"
         self.certificate_path = ""
         self.private_key_path = ""
@@ -66,7 +66,7 @@ class UaClient:
         logger.info("Connecting to %s with parameters %s, %s, %s, %s", uri, self.security_mode, self.security_policy, self.certificate_path, self.private_key_path)
         # Create client object and associate url of the server
         self.client = Client(uri)
-        if self.security_mode != "None_" and self.security_policy != "None":
+        if self.security_mode != "None" and self.security_policy != "None":
             # Set SecureConnection mode
             self.client.set_security(
                 getattr(crypto.security_policies, 'SecurityPolicy' + self.security_policy),
@@ -207,7 +207,7 @@ class UaClient:
             self.certificate_path = cert
             self.private_key_path = key
         else:
-            self.security_mode = "None_"
+            self.security_mode = "None"
             self.security_policy = "None"
             self.certificate_path = ""
             self.private_key_path = ""

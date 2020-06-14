@@ -86,7 +86,7 @@ class DataChangeUI(object):
         if node in self.subscribed_nodes or nodeid in self.uaclient.custom_objects:
             logger.warning("already subscribed to node: %s ", node)
             return
-        text = str(node.get_display_name().Text)
+        text = node.get_display_name().Text
         row = [QStandardItem(QIcon("icons/object.svg"), text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
@@ -98,6 +98,7 @@ class DataChangeUI(object):
             self.window.show_error(ex)
             idx = self.model.indexFromItem(row[0])
             self.model.takeRow(idx.row())
+            self.subscribed_nodes.remove(node)
             raise
 
     @trycatchslot

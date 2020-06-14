@@ -233,7 +233,7 @@ class TreeViewModel(QStandardItemModel):
             descs.sort(key=lambda x: x.DisplayName.to_string())
             added = []
             for desc in descs:
-                if not desc.NodeId in added:
+                if desc.NodeId not in added:
                     self.add_item(desc, parent)
                     added.append(desc.NodeId)
         except Exception as ex:

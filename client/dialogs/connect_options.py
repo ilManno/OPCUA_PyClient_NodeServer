@@ -48,7 +48,7 @@ class ConnectOptionsDialog(QDialog):
         self._toggle_security_fields(mode)
 
     def _toggle_security_fields(self, mode):
-        if mode == "None_":
+        if mode == "None":
             self.ui.certificateButton.setEnabled(False)
             self.ui.certificateLabel.hide()
             self.ui.privateKeyButton.setEnabled(False)
