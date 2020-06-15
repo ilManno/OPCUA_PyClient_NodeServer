@@ -7,8 +7,8 @@ from PyQt5.QtWidgets import QApplication, QMenu, QAction, QStyledItemDelegate, Q
 from opcua import ua, Node
 from opcua.common.ua_utils import string_to_val, val_to_string, data_type_to_string
 
-from uawidgets.get_node_dialog import GetNodeButton
-from uawidgets.utils import trycatchslot
+from dialogs.get_node_dialog import GetNodeButton
+from utils import trycatchslot
 
 
 logger = logging.getLogger(__name__)
