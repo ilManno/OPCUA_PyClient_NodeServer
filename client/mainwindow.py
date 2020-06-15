@@ -246,19 +246,10 @@ class Window(QMainWindow):
         try:
             # Query Endpoints
             endpoints = self.uaclient.get_endpoints(uri)
-            # Create dict of endpoints with security modes as keys and security policies as values
-            endpoints_dict = {"None": [], "Sign": [], "SignAndEncrypt": []}
-            for edp in endpoints:
-                if edp.TransportProfileUri == "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary":
-                    mode = edp.SecurityMode.name
-                    if mode == "None_":
-                        mode = "None"
-                    policy = edp.SecurityPolicyUri.split("#")[1]
-                    endpoints_dict[mode].append(policy)
             # Load security settings
             self.uaclient.load_security_settings(uri)
             # Init Dialog with current settings
-            dia = ConnectOptionsDialog(endpoints_dict, self.uaclient.security_mode, self.uaclient.security_policy,
+            dia = ConnectOptionsDialog(endpoints, self.uaclient.security_mode, self.uaclient.security_policy,
                                        self.uaclient.certificate_path, self.uaclient.private_key_path)
             ret = dia.exec_()
             if ret:

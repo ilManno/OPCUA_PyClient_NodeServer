@@ -1,6 +1,8 @@
 from pathlib import Path
 import subprocess
 
+from PyQt5.QtCore import Qt, QItemSelection, QSignalBlocker
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox
 
 from dialogs.connect_options_ui import Ui_ConnectOptionsDialog
@@ -8,18 +10,26 @@ from utils import trycatchslot
 
 
 class ConnectOptionsDialog(QDialog):
-    def __init__(self, endpoints_dict, security_mode, security_policy, certificate_path, private_key_path):
+    def __init__(self, endpoints, security_mode, security_policy, certificate_path, private_key_path):
         super().__init__()
         self.ui = Ui_ConnectOptionsDialog()
         self.ui.setupUi(self)
 
-        self.endpoints_dict = endpoints_dict
+        self.endpoints_model = QStandardItemModel()
+        self.ui.endpointsView.setModel(self.endpoints_model)
+        self.endpoints_model.setHorizontalHeaderLabels(["Endpoint URL", "Security Mode", "Security Policy", "Transport Profile URI"])
+        self.ui.endpointsView.setColumnWidth(0, 300)
+        self.ui.endpointsView.selectionModel().selectionChanged.connect(self.select_security)
+
+        # Dict of endpoints with security modes as keys and security policies as values
+        self.endpoints_dict = {"None": [], "Sign": [], "SignAndEncrypt": []}
         self.certificate_path = certificate_path
         self.private_key_path = private_key_path
 
-        self._init_fields(security_mode, security_policy)
+        self._init_fields(endpoints, security_mode, security_policy)
 
         self.ui.modeComboBox.currentTextChanged.connect(self._change_policies)
+        self.ui.policyComboBox.currentTextChanged.connect(self._select_endpoint)
         self.ui.certificateButton.clicked.connect(self.select_certificate)
         self.ui.privateKeyButton.clicked.connect(self.select_private_key)
         self.ui.generateButton.clicked.connect(self.generate_certificate)
@@ -27,7 +37,24 @@ class ConnectOptionsDialog(QDialog):
         self.ui.cancelButton.clicked.connect(self.reject)
 
     @trycatchslot
-    def _init_fields(self, security_mode, security_policy):
+    def _init_fields(self, endpoints, security_mode, security_policy):
+        for edp in endpoints:
+            mode = edp.SecurityMode.name
+            if mode == "None_":
+                mode = "None"
+            policy = edp.SecurityPolicyUri.split("#")[1]
+            transport_profile = edp.TransportProfileUri
+            row = [QStandardItem(edp.EndpointUrl), QStandardItem(mode), QStandardItem(policy), QStandardItem(transport_profile)]
+            if transport_profile == "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary":
+                # Endpoint supported
+                row[0].setData(mode + policy, Qt.UserRole)
+                self.endpoints_dict[mode].append(policy)
+            else:
+                # Endpoint not supported
+                for col in row:
+                    col.setData(QBrush(QColor(255, 183, 183)), Qt.BackgroundRole)
+            self.endpoints_model.appendRow(row)
+
         self.ui.modeComboBox.clear()
         self.ui.policyComboBox.clear()
 
@@ -36,6 +63,8 @@ class ConnectOptionsDialog(QDialog):
         current_mode = self.ui.modeComboBox.currentText()
         self.ui.policyComboBox.addItems(self.endpoints_dict[current_mode])
         self.ui.policyComboBox.setCurrentText(security_policy)
+
+        self._select_endpoint(security_policy)
 
         self.ui.certificateLabel.setText(Path(self.certificate_path).name)
         self.ui.privateKeyLabel.setText(Path(self.private_key_path).name)
@@ -65,6 +94,28 @@ class ConnectOptionsDialog(QDialog):
                 self.ui.connectButton.setEnabled(True)
             else:
                 self.ui.connectButton.setEnabled(False)
+
+    def _select_endpoint(self, policy):
+        if policy:
+            pattern = self.ui.modeComboBox.currentText() + policy
+            idxlist = self.endpoints_model.match(self.endpoints_model.index(0, 0), Qt.UserRole, pattern, 1, Qt.MatchExactly)
+            if idxlist and idxlist[0].row() != self.ui.endpointsView.currentIndex().row():
+                self.ui.endpointsView.setCurrentIndex(idxlist[0])
+
+    def select_security(self, selection):
+        if isinstance(selection, QItemSelection):
+            if not selection.indexes():  # no selection
+                return
+        idx = self.ui.endpointsView.currentIndex()
+        transport_profile_uri = self.endpoints_model.data(idx.siblingAtColumn(3))
+        if transport_profile_uri != "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary":
+            blocker = QSignalBlocker(self.ui.endpointsView.selectionModel())
+            self.ui.endpointsView.selectionModel().clearSelection()
+        else:
+            security_mode = self.endpoints_model.data(idx.siblingAtColumn(1))
+            security_policy = self.endpoints_model.data(idx.siblingAtColumn(2))
+            self.ui.modeComboBox.setCurrentText(security_mode)
+            self.ui.policyComboBox.setCurrentText(security_policy)
 
     def select_certificate(self):
         path = QFileDialog.getOpenFileName(self, "Select certificate", self.certificate_path, "Certificate (*.der)")[0]
