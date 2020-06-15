@@ -8,7 +8,7 @@ from widgets.tree import TreeWidget
 
 class GetNodeTextButton(QWidget):
     """
-    Create a text field with  a button which will query a node
+    Create a text field with a button which will query a node
     """
 
     def __init__(self, parent, currentnode, startnode):
@@ -86,13 +86,12 @@ class GetNodeDialog(QDialog):
 
         self.treeview = QTreeView(self)
         self.treeview.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.tree = TreeWidget(self.treeview)
+        custom_objects = {}
+        self.tree = TreeWidget(self.treeview, custom_objects)
         self.tree.set_root_node(startnode)
         layout.addWidget(self.treeview)
 
-        self.buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-            Qt.Horizontal, self)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         layout.addWidget(self.buttons)
         self.resize(800, 600)
 
@@ -121,7 +120,7 @@ class GetDataTypeNodeButton(GetNodeButton):
     """
 
     def __init__(self, parent, server, settings, dtype=None):
-        self.settings = settings  # We pass settings because we cannot create QSettings before __inint__ of super()
+        self.settings = settings  # We pass settings because we cannot create QSettings before __init__ of super()
         base_data_type = server.get_node(ua.ObjectIds.BaseDataType)
         if dtype is None:
             dtype = self.settings.value("last_datatype", None)
