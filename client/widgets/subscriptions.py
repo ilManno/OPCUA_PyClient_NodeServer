@@ -1,9 +1,9 @@
 from datetime import datetime
 import logging
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QItemSelection
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QBrush, QColor
-from PyQt5.QtWidgets import QMenu, QAction, QTabWidget, QWidget, QGridLayout, QTableView, QAbstractItemView
+from PyQt5.QtWidgets import QMenu, QAction, QWidget, QGridLayout, QTableView, QAbstractItemView
 
 from opcua import ua, Node
 
@@ -74,6 +74,20 @@ class DataChangeUI(object):
         actionDeleteMonitoredItem.triggered.connect(self._delete_monitored_item_context)
         self._contextMenu = QMenu()
         self._contextMenu.addAction(actionDeleteMonitoredItem)
+
+        self.view.selectionModel().selectionChanged.connect(self.highlight_node)
+
+    def highlight_node(self, selection):
+        if isinstance(selection, QItemSelection):
+            if not selection.indexes():  # no selection
+                return
+        idx = self.view.currentIndex()
+        idx = idx.siblingAtColumn(0)
+        it = self.model.itemFromIndex(idx)
+        if not it:
+            return
+        node = it.data()
+        self.window.tree_ui.expand_to_node(node)
 
     def canDropMimeData(self, mdata, action, row, column, parent):
         node = self.uaclient.client.get_node(mdata.text())

@@ -1,21 +1,19 @@
 import logging
 import sys
 
-from PyQt5.QtCore import QTimer, Qt, QSettings, QItemSelection, QCoreApplication, QSignalBlocker
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QFont
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QListWidgetItem, QPushButton, QGridLayout, QTableView, QAbstractItemView, QTabBar
+from PyQt5.QtCore import QTimer, Qt, QSettings, QItemSelection, QCoreApplication
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QTabBar
 
 from opcua import ua, Node
 
 from widgets.attributes import AttrsWidget
 from dialogs.call_method import CallMethodDialog
 from logger import QtHandler
-from widgets.variables import DataChangeCardUI
 from widgets.subscriptions import SubTab, DataChangeUI
-from widgets.card import Ui_CardWidget
 from widgets.references import RefsWidget
 from widgets.tree import TreeWidget
-from utils import trycatchslot, get_icon
+from utils import trycatchslot
 
 from dialogs.connect_options import ConnectOptionsDialog
 from dialogs.sub_options import SubOptionsDialog
@@ -75,7 +73,6 @@ class Window(QMainWindow):
         self.setup_context_menu_tree()
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_refs)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
-        #self.ui.treeView.selectionModel().selectionChanged.connect(self.select_card)
 
         # Context Menu
         self.ui.actionCopyPath.triggered.connect(self.tree_ui.copy_path)
@@ -96,7 +93,6 @@ class Window(QMainWindow):
         # Attributes Widget
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
-        #self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler)
         self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionReload)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
@@ -106,10 +102,10 @@ class Window(QMainWindow):
         self.ui.tabWidget.setTabEnabled(0, False)
         self.subTabs = []
         self.datachange_uis = []
+        self.previous_index = -1
         self.ui.tabWidget.tabBarClicked.connect(self.add_sub_tab)
+        self.ui.tabWidget.currentChanged.connect(self.restore_index)
         self.ui.tabWidget.tabCloseRequested.connect(self.remove_sub_tab)
-        #self.datachangecards = []
-        #self.ui.scadaWidget.currentRowChanged.connect(self.highlight_node)
 
         # Connection Buttons
         self.ui.connectButton.clicked.connect(self.handle_connect)
@@ -124,6 +120,8 @@ class Window(QMainWindow):
 
     def add_sub_tab(self, index):
         if self.ui.tabWidget.isTabEnabled(index) and index == self.ui.tabWidget.count() - 1:
+            uri = self.ui.addrComboBox.currentText()
+            self.uaclient.load_subscription_settings(uri)
             # Init Dialog with current settings
             dia = SubOptionsDialog(self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount,
                                    self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish)
@@ -131,7 +129,7 @@ class Window(QMainWindow):
             if ret:
                 self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount, \
                 self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish = dia.get_selected_options()
-
+                self.uaclient.save_subscription_settings(uri)
                 subTab = SubTab()
                 self.ui.tabWidget.insertTab(index, subTab, f"Sub{index + 1}")
                 self.ui.tabWidget.setTabToolTip(index, self.get_sub_tooltip())
@@ -140,7 +138,11 @@ class Window(QMainWindow):
                 self.subTabs.append(subTab)
                 self.datachange_uis.append(data_change_ui)
             else:
-                self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.currentIndex())
+                self.previous_index = self.get_current_tab_index()
+
+    def restore_index(self, index):
+        if index == self.ui.tabWidget.count() - 1:
+            self.ui.tabWidget.setCurrentIndex(self.previous_index)
 
     def get_sub_tooltip(self):
         return f"PublishingInterval = {self.uaclient.requestedPublishingInterval}\nKeepAliveCount = {self.uaclient.requestedMaxKeepAliveCount}\nLifetimeCount = {self.uaclient.requestedLifetimeCount}\nMaxNotificationsPerPublish = {self.uaclient.maxNotificationsPerPublish}"
@@ -161,136 +163,6 @@ class Window(QMainWindow):
         del self.datachange_uis[index]
         self.ui.tabWidget.removeTab(index)
         del self.subTabs[index]
-
-    """
-    def show_cards(self):
-        for idx, (nodeid, object_type) in enumerate(self.uaclient.custom_objects.items()):
-            cardWidget = QWidget()
-            cardUi = Ui_CardWidget()
-            cardUi.setupUi(cardWidget)
-            cardUi.variablesView.setStyleSheet("QHeaderView::section { background-color: #fafafa; border: none; height: 20px; }")
-            cardUi.variablesView.clicked.connect(self.highlight_card)
-
-            model = QStandardItemModel()
-            model.setHorizontalHeaderLabels(["", "", ""])
-            cardUi.variablesView.setModel(model)
-            cardUi.variablesView.setColumnWidth(0, 150)
-            cardUi.variablesView.setColumnWidth(1, 150)
-
-            width = 80
-            height = 80
-
-            icon = get_icon(object_type)
-            cardUi.icon.setPixmap(QPixmap(icon).scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            cardUi.icon.setAlignment(Qt.AlignCenter)
-
-            font = QFont()
-            font.setPointSize(11)
-            font.setBold(True)
-
-            obj = self.uaclient.get_node(nodeid)
-            display_name = QStandardItem(obj.get_display_name().to_string())
-            display_name.setFont(font)
-            nodeid = nodeid.to_string()
-
-            cardWidget.setObjectName(f"{idx}|{nodeid}")
-
-            nodeid = QStandardItem(nodeid)
-            nodeid.setFont(font)
-            model.appendRow([display_name, nodeid, QStandardItem("")])
-
-            model.appendRow(QStandardItem(""))
-
-            variables = obj.get_children(ua.ObjectIds.Aggregates, ua.NodeClass.Variable)
-
-            d_rows = []
-            p_rows = []
-            obj_name = ["unsubscribe"]
-
-            for var in variables:
-                name = var.get_display_name().to_string()
-                value = str(var.get_value())
-                row = [QStandardItem(name), QStandardItem(value)]
-                row[0].setData(var)
-                # Add monitored item to subscription
-                obj_name.append(var.nodeid.to_string())
-                if var.get_type_definition() == ua.TwoByteNodeId(ua.ObjectIds.BaseDataVariableType):
-                    # Data Variable
-                    d_rows.append(row)
-                else:
-                    # Property
-                    p_rows.append(row)
-
-            updateButton = QPushButton()
-            updateButton.setObjectName("|".join(obj_name))
-            updateButton.setIcon(QIcon("icons/update.svg"))
-            updateButton.setToolTip("Stop update")
-            updateButton.clicked.connect(self.handle_subscribe)
-            cardUi.variablesView.setIndexWidget(model.index(0, 2), updateButton)
-
-            font.setPointSize(10)
-            font.setItalic(True)
-
-            p_header = QStandardItem("Properties")
-            p_header.setFont(font)
-            d_header = QStandardItem("Data Variables")
-            d_header.setFont(font)
-
-            model.appendRow(p_header)
-            # Append property rows
-            for p_row in p_rows:
-                model.appendRow(p_row)
-
-            model.appendRow(QStandardItem(""))
-            model.appendRow(d_header)
-            # Append data_variable rows
-            for d_row in d_rows:
-                model.appendRow(d_row)
-
-            datachangecard_ui = DataChangeCardUI(self, self.uaclient, self.sub_handler, model)
-            datachangecard_ui.subscribe(variables)
-            self.datachangecards.append(datachangecard_ui)
-
-            item = QListWidgetItem()
-            item.setSizeHint(cardWidget.sizeHint())
-            self.ui.scadaWidget.addItem(item)
-            self.ui.scadaWidget.setItemWidget(item, cardWidget)
-
-    def highlight_card(self):
-        card = self.ui.scadaWidget.sender().parent().parent()
-        index = int(card.objectName().split("|")[0])
-        self.ui.scadaWidget.setCurrentRow(index)
-
-    def highlight_node(self, row):
-        if row != -1:
-            card = self.ui.scadaWidget.itemWidget(self.ui.scadaWidget.currentItem())
-            nodeid = card.objectName().split("|")[1]
-            self.tree_ui.expand_to_node(self.uaclient.client.get_node(nodeid))
-
-    def handle_subscribe(self):
-        button = self.ui.scadaWidget.sender()
-        action, *nodeids = button.objectName().split("|")
-        if action == "unsubscribe":
-            action = "subscribe"
-            for nodeid in nodeids:
-                node = self.uaclient.get_node(nodeid)
-                # An alternative way could be to set MonitoringMode from Reporting to Disabled
-                self.uaclient.remove_monitored_item(node)
-                action += f"|{nodeid}"
-            button.setObjectName(action)
-            button.setIcon(QIcon("icons/noupdate.svg"))
-            button.setToolTip("Enable update")
-        else:
-            action = "unsubscribe"
-            for nodeid in nodeids:
-                node = self.uaclient.get_node(nodeid)
-                # An alternative way could be to set MonitoringMode from Disabled to Reporting
-                self.uaclient.create_monitored_items(node)
-                action += f"|{nodeid}"
-            button.setObjectName(action)
-            button.setIcon(QIcon("icons/update.svg"))
-            button.setToolTip("Stop update")
-    """
 
     @trycatchslot
     def show_options_dialog(self):
@@ -330,25 +202,6 @@ class Window(QMainWindow):
         if node:
             self.attrs_ui.show_attrs(node)
 
-    """
-    def select_card(self, selection):
-        if isinstance(selection, QItemSelection):
-            if not selection.indexes():  # no selection
-                return
-        node = self.get_current_node()
-        if node and node.get_parent():
-            if node.nodeid in self.uaclient.custom_objects or node.get_parent().nodeid in self.uaclient.custom_objects:
-                nodeid = node.nodeid.to_string()
-                parent_nodeid = node.get_parent().nodeid.to_string()
-                for i in range(self.ui.scadaWidget.count()):
-                    card = self.ui.scadaWidget.itemWidget(self.ui.scadaWidget.item(i))
-                    card_nodeid = card.objectName().split("|")[1]
-                    if card_nodeid == nodeid or card_nodeid == parent_nodeid:
-                        blocker = QSignalBlocker(self.ui.scadaWidget)
-                        self.ui.scadaWidget.setCurrentRow(i)
-                        break
-    """
-
     def show_error(self, msg):
         logger.warning("showing error: %s")
         self.ui.statusBar.show()
@@ -372,21 +225,12 @@ class Window(QMainWindow):
         self.ui.connectButton.repaint()
         uri = self.ui.addrComboBox.currentText()
         self.uaclient.load_security_settings(uri)
-        # Subscription settings
-        self.uaclient.load_subscription_settings(uri)
-        #self.configure_subscription()
-        self.uaclient.save_subscription_settings(uri)
-        # Monitored items settings
-        self.uaclient.load_monitored_items_settings(uri)
-        #self.configure_monitored_items()
-        self.uaclient.save_monitored_items_settings(uri)
         try:
             # Connect
             self.uaclient.connect(uri)
             # Show widgets
             self._update_address_list(uri)
             self.uaclient.load_custom_objects()
-            #self.show_cards()
             self.tree_ui.set_root_node(self.uaclient.client.get_root_node())
             self.ui.treeView.setFocus()
             self.load_current_node()
@@ -401,17 +245,6 @@ class Window(QMainWindow):
             self.show_error(ex)
             raise
 
-    def configure_monitored_items(self):
-        # Init Dialog with current settings
-        dia = MiOptionsDialog(self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest,
-                              self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger,
-                              self.uaclient.deadbandType, self.uaclient.deadbandValue)
-        ret = dia.exec_()
-        if ret:
-            self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest, \
-            self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger, self.uaclient.deadbandType, \
-            self.uaclient.deadbandValue = dia.get_selected_options()
-
     def get_current_tab_index(self):
         return self.ui.tabWidget.currentIndex()
 
@@ -424,6 +257,8 @@ class Window(QMainWindow):
         if node in self.datachange_uis[index].subscribed_nodes:
             logger.warning("already subscribed to node: %s ", node)
             return
+        uri = self.ui.addrComboBox.currentText()
+        self.uaclient.load_monitored_items_settings(uri)
         # Init Dialog with current settings
         dia = MiOptionsDialog(self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest,
                               self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger,
@@ -433,6 +268,7 @@ class Window(QMainWindow):
             self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest, \
             self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger, self.uaclient.deadbandType, \
             self.uaclient.deadbandValue = dia.get_selected_options()
+            self.uaclient.save_monitored_items_settings(uri)
             self.datachange_uis[index].add_monitored_item(index, node)
 
     def delete_monitored_item(self):
@@ -462,7 +298,7 @@ class Window(QMainWindow):
 
     def disconnect(self):
         try:
-            #self.uaclient.delete_subscription()
+            self.uaclient.delete_subscriptions()
             self.uaclient.disconnect()
         except Exception as ex:
             self.show_error(ex)
@@ -472,8 +308,10 @@ class Window(QMainWindow):
             self.tree_ui.clear()
             self.attrs_ui.clear()
             self.refs_ui.clear()
-            #self.datachange_ui.clear()
-            #self.ui.scadaWidget.clear()
+            for _ in range(self.ui.tabWidget.count() - 1):
+                self.ui.tabWidget.removeTab(0)
+            self.datachange_uis = []
+            self.subTabs = []
             self.ui.connectButton.setText("Connect")
             self.ui.optionsButton.setEnabled(True)
             self.ui.addrComboBox.setEnabled(True)
@@ -538,7 +376,7 @@ class Window(QMainWindow):
             self.ui.actionAddMonitoredItem.setEnabled(False)
             self.ui.actionRemoveMonitoredItem.setEnabled(False)
         else:
-            index = self.ui.tabWidget.currentIndex()
+            index = self.get_current_tab_index()
             datachange_ui = self.datachange_uis[index]
             self.ui.actionAddMonitoredItem.setEnabled(node not in datachange_ui.subscribed_nodes)
             self.ui.actionRemoveMonitoredItem.setEnabled(not self.ui.actionAddMonitoredItem.isEnabled())

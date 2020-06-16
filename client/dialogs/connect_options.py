@@ -47,7 +47,6 @@ class ConnectOptionsDialog(QDialog):
             row = [QStandardItem(edp.EndpointUrl), QStandardItem(mode), QStandardItem(policy), QStandardItem(transport_profile)]
             if transport_profile == "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary":
                 # Endpoint supported
-                row[0].setData(mode + policy, Qt.UserRole)
                 self.endpoints_dict[mode].append(policy)
             else:
                 # Endpoint not supported
@@ -97,10 +96,11 @@ class ConnectOptionsDialog(QDialog):
 
     def _select_endpoint(self, policy):
         if policy:
-            pattern = self.ui.modeComboBox.currentText() + policy
-            idxlist = self.endpoints_model.match(self.endpoints_model.index(0, 0), Qt.UserRole, pattern, 1, Qt.MatchExactly)
-            if idxlist and idxlist[0].row() != self.ui.endpointsView.currentIndex().row():
-                self.ui.endpointsView.setCurrentIndex(idxlist[0])
+            mode = self.ui.modeComboBox.currentText()
+            idxlist = self.endpoints_model.match(self.endpoints_model.index(0, 2), Qt.DisplayRole, policy, -1, Qt.MatchExactly)
+            for idx in idxlist:
+                if self.endpoints_model.data(idx.siblingAtColumn(1)) == mode and idx.row() != self.ui.endpointsView.currentIndex().row():
+                    self.ui.endpointsView.setCurrentIndex(idx)
 
     def select_security(self, selection):
         if isinstance(selection, QItemSelection):

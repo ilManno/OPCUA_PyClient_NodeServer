@@ -179,6 +179,14 @@ class UaClient:
         sub.delete()
         del self._datachange_subs[index]
 
+    def delete_subscriptions(self):
+        for sub, monitored_items_handles in self._datachange_subs:
+            # Remove all monitored items from subscription
+            for handle in monitored_items_handles.values():
+                sub.unsubscribe(handle)
+            # Delete subscription on server
+            sub.delete()
+
     def get_node(self, nodeid):
         # Get node using NodeId object or a string representing a NodeId
         return self.client.get_node(nodeid)
