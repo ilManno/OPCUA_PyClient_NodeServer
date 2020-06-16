@@ -144,7 +144,14 @@ server.initialize(() => {
             engineeringUnits: opcua.standardUnits.degree_celsius,
             componentOf: tempSensor1,
             dataType: "Double",
-            value: { get: function(){return new opcua.Variant({dataType: opcua.DataType.Double , value: getRandomValue(ts1_min_temp, ts1_max_temp)}); } }
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(ts1_min_temp, ts1_max_temp)
+                    });
+                }
+            }
         });
 
         // Temp Sensor #2
@@ -204,7 +211,14 @@ server.initialize(() => {
             engineeringUnits: opcua.standardUnits.degree_celsius,
             componentOf: tempSensor2,
             dataType: "Double",
-            value: { get: function(){return new opcua.Variant({dataType: opcua.DataType.Double , value: getRandomValue(ts2_min_temp, ts2_max_temp)}); } }
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(ts2_min_temp, ts2_max_temp)
+                    });
+                }
+            }
         });
 
         // Level Indicator
@@ -262,7 +276,14 @@ server.initialize(() => {
             engineeringUnits: opcua.standardUnits.centimetre,
             componentOf: levelIndicator,
             dataType: "Double",
-            value: { get: function(){return new opcua.Variant({dataType: opcua.DataType.Double , value: getRandomValue(0, 100)}); } }
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(0, 100)
+                    });
+                }
+            }
         });
 
         // Flow Sensor
@@ -320,7 +341,14 @@ server.initialize(() => {
             engineeringUnits: opcua.standardUnits.bar,
             componentOf: flowSensor,
             dataType: "Double",
-            value: { get: function(){return new opcua.Variant({dataType: opcua.DataType.Double , value: getRandomValue(0, 100)}); } }
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(0, 100)
+                    });
+                }
+            }
         });
 
         // Actuators
@@ -358,9 +386,16 @@ server.initialize(() => {
                 high: 300.0
             },
             engineeringUnits: opcua.standardUnits.degree_celsius,
-            componentOf: tempSensor2,
+            componentOf: boiler,
             dataType: "Double",
-            value: { get: function(){return new opcua.Variant({dataType: opcua.DataType.Double , value: getRandomValue(-100, 250)}); } }
+            value: { 
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(-100, 250)
+                    });
+                }
+            }
         });
 
         // Motor#1
@@ -410,15 +445,22 @@ server.initialize(() => {
         });
 
         const m1_exit_speed = namespace.addAnalogDataItem({
-            browseName: "Exit Speed",
+            browseName: "Power",
             engineeringUnitsRange: {
                 low:  -20,
                 high: 100.0
             },
-            engineeringUnits: "rpm",
+            engineeringUnits: opcua.standardUnits.kilowatt,
             componentOf: motor1,
             dataType: "Double",
-            value: { get: function(){return new opcua.Variant({dataType: opcua.DataType.Double , value: getRandomValue(0, 6500)}); } }
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(0, 6500)
+                    });
+                }
+            }
         });
 
         // Motor#2
@@ -468,15 +510,22 @@ server.initialize(() => {
         });
 
         const m2_exit_speed = namespace.addAnalogDataItem({
-            browseName: "Exit Speed",
+            browseName: "Power",
             engineeringUnitsRange: {
                 low:  0,
                 high: 7000.0
             },
-            engineeringUnits: "rpm",
+            engineeringUnits: opcua.standardUnits.kilowatt,
             componentOf: motor2,
             dataType: "Double",
-            value: { get: function(){return new opcua.Variant({dataType: opcua.DataType.Double , value: getRandomValue(0, 7000)}); } }
+            value: {
+                get: function() {
+                    return new opcua.Variant({
+                        dataType: opcua.DataType.Double,
+                        value: getRandomValue(0, 7000)
+                    });
+                }
+            }
         });
 
         // Valve

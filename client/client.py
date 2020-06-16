@@ -16,7 +16,7 @@ class UaClient:
         self.client = None
         self._connected = False
         # Subscription
-        self._datachange_sub = None
+        self._datachange_subs = []  # list of tuples with subscription and dict with nodeids as keys and handles as values
         self.publishingEnabled = True  # Not necessary
         self.requestedPublishingInterval = 500
         self.requestedMaxKeepAliveCount = 3000
@@ -24,7 +24,6 @@ class UaClient:
         self.maxNotificationsPerPublish = 10000
         self.priority = 0  # Not necessary
         # Monitored items
-        self._subs_dc = {}  # dict with nodeids as keys and handles as values
         self._client_handle = 0
         self.samplingInterval = 250
         self.queueSize = 0
@@ -49,8 +48,7 @@ class UaClient:
     def _reset(self):
         self.client = None
         self._connected = False
-        self._datachange_sub = None
-        self._subs_dc = {}
+        self._datachange_subs = []
         self.custom_objects = {}
 
     @staticmethod
@@ -96,7 +94,7 @@ class UaClient:
             finally:
                 self._reset()
 
-    def _create_subscription(self, handler):
+    def create_subscription(self, handler):
         # Set subscription parameters
         params = ua.CreateSubscriptionParameters()
         params.PublishingEnabled = self.publishingEnabled
@@ -105,11 +103,10 @@ class UaClient:
         params.RequestedLifetimeCount = self.requestedLifetimeCount
         params.MaxNotificationsPerPublish = self.maxNotificationsPerPublish
         params.Priority = self.priority
-        self._datachange_sub = self.client.create_subscription(params, handler)
+        datachange_sub = self.client.create_subscription(params, handler)
+        self._datachange_subs.append((datachange_sub, {}))
 
-    def create_monitored_items(self, nodes, handler=None):
-        if not self._datachange_sub:
-            self._create_subscription(handler)
+    def create_monitored_items(self, nodes, index):
         monitored_items = []
         if not isinstance(nodes, list):
             nodes = [nodes]
@@ -158,40 +155,35 @@ class UaClient:
             mir.RequestedParameters = mparams
             # Append to list
             monitored_items.append(mir)
-        handles = self._datachange_sub.create_monitored_items(monitored_items)
+        sub, monitored_items_handles = self._datachange_subs[index]
+        handles = sub.create_monitored_items(monitored_items)
         for i in range(len(handles)):
             handle = handles[i]
             if type(handle) == ua.StatusCode:
                 handle.check()
-            self._subs_dc[nodes[i].nodeid] = handle
+            monitored_items_handles[nodes[i].nodeid] = handle
 
-    """
-    def subscribe_datachange(self, node):
-        # Subscribe for data change events for node
-        # This will create a new monitored item in subscription
-        handle = self._datachange_sub.subscribe_data_change(node)
-        self._subs_dc[node.nodeid] = handle
-    """
-
-    def remove_monitored_item(self, node):
+    def remove_monitored_item(self, node, index):
         # Unsubscribe to data change using the handle stored while creating monitored item
         # This will remove the corresponding monitored item from subscription
-        self._datachange_sub.unsubscribe(self._subs_dc[node.nodeid])
-        del self._subs_dc[node.nodeid]
+        sub, monitored_items_handles = self._datachange_subs[index]
+        sub.unsubscribe(monitored_items_handles[node.nodeid])
+        del monitored_items_handles[node.nodeid]
 
-    def delete_subscription(self):
-        if self._datachange_sub:
-            # Remove all monitored items from subscription
-            for handle in self._subs_dc.values():
-                self._datachange_sub.unsubscribe(handle)
-            # Delete subscription on server
-            self._datachange_sub.delete()
+    def delete_subscription(self, index):
+        sub, monitored_items_handles = self._datachange_subs[index]
+        # Remove all monitored items from subscription
+        for handle in monitored_items_handles.values():
+            sub.unsubscribe(handle)
+        # Delete subscription on server
+        sub.delete()
+        del self._datachange_subs[index]
 
     def get_node(self, nodeid):
         # Get node using NodeId object or a string representing a NodeId
         return self.client.get_node(nodeid)
 
-    def find_custom_objects(self):
+    def load_custom_objects(self):
         """
         Function that populates custom_objects dictionary,
         with nodeids of custom objects as keys and

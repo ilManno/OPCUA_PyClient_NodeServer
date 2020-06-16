@@ -3,19 +3,18 @@ import sys
 
 from PyQt5.QtCore import QTimer, Qt, QSettings, QItemSelection, QCoreApplication, QSignalBlocker
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QFont
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QListWidgetItem, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QMenu, QListWidgetItem, QPushButton, QGridLayout, QTableView, QAbstractItemView, QTabBar
 
-from opcua import ua
+from opcua import ua, Node
 
 from widgets.attributes import AttrsWidget
 from dialogs.call_method import CallMethodDialog
 from logger import QtHandler
 from widgets.variables import DataChangeCardUI
-from widgets.subscriptions import DataChangeUI
+from widgets.subscriptions import SubTab, DataChangeUI
 from widgets.card import Ui_CardWidget
 from widgets.references import RefsWidget
 from widgets.tree import TreeWidget
-from widgets.sub_handler import DataChangeHandler
 from utils import trycatchslot, get_icon
 
 from dialogs.connect_options import ConnectOptionsDialog
@@ -76,13 +75,19 @@ class Window(QMainWindow):
         self.setup_context_menu_tree()
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_refs)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
-        self.ui.treeView.selectionModel().selectionChanged.connect(self.select_card)
+        #self.ui.treeView.selectionModel().selectionChanged.connect(self.select_card)
 
         # Context Menu
         self.ui.actionCopyPath.triggered.connect(self.tree_ui.copy_path)
         self.ui.actionCopyNodeId.triggered.connect(self.tree_ui.copy_nodeid)
         self.ui.actionCall.triggered.connect(self.call_method)
         self.ui.actionReload.triggered.connect(self.tree_ui.reload_current)
+        self.ui.actionAddMonitoredItem.triggered.connect(self.add_monitored_item)
+        self.ui.actionRemoveMonitoredItem.triggered.connect(self.delete_monitored_item)
+
+        # populate contextual menu
+        self.addAction(self.ui.actionAddMonitoredItem)
+        self.addAction(self.ui.actionRemoveMonitoredItem)
 
         # References Widget
         self.refs_ui = RefsWidget(self.ui.refView)
@@ -91,15 +96,20 @@ class Window(QMainWindow):
         # Attributes Widget
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
-        self.sub_handler = DataChangeHandler()
-        self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler)
+        #self.datachange_ui = DataChangeUI(self, self.uaclient, self.sub_handler)
         self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionReload)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
 
-        # Cards Widget
-        self.datachangecards = []
-        self.ui.scadaWidget.currentRowChanged.connect(self.highlight_node)
+        # Tabs Widget
+        self.ui.tabWidget.tabBar().tabButton(0, QTabBar.RightSide).resize(0, 0)
+        self.ui.tabWidget.setTabEnabled(0, False)
+        self.subTabs = []
+        self.datachange_uis = []
+        self.ui.tabWidget.tabBarClicked.connect(self.add_sub_tab)
+        self.ui.tabWidget.tabCloseRequested.connect(self.remove_sub_tab)
+        #self.datachangecards = []
+        #self.ui.scadaWidget.currentRowChanged.connect(self.highlight_node)
 
         # Connection Buttons
         self.ui.connectButton.clicked.connect(self.handle_connect)
@@ -112,6 +122,47 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
+    def add_sub_tab(self, index):
+        if self.ui.tabWidget.isTabEnabled(index) and index == self.ui.tabWidget.count() - 1:
+            # Init Dialog with current settings
+            dia = SubOptionsDialog(self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount,
+                                   self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish)
+            ret = dia.exec_()
+            if ret:
+                self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount, \
+                self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish = dia.get_selected_options()
+
+                subTab = SubTab()
+                self.ui.tabWidget.insertTab(index, subTab, f"Sub{index + 1}")
+                self.ui.tabWidget.setTabToolTip(index, self.get_sub_tooltip())
+                data_change_ui = DataChangeUI(self, self.uaclient, subTab.subView)
+                data_change_ui.create_subscription()
+                self.subTabs.append(subTab)
+                self.datachange_uis.append(data_change_ui)
+            else:
+                self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.currentIndex())
+
+    def get_sub_tooltip(self):
+        return f"PublishingInterval = {self.uaclient.requestedPublishingInterval}\nKeepAliveCount = {self.uaclient.requestedMaxKeepAliveCount}\nLifetimeCount = {self.uaclient.requestedLifetimeCount}\nMaxNotificationsPerPublish = {self.uaclient.maxNotificationsPerPublish}"
+
+    def get_monitored_item_tooltip(self):
+        tooltip = f"SamplingInterval = {self.uaclient.samplingInterval}\nQueueSize = {self.uaclient.queueSize}\nDiscardOldest = {self.uaclient.discardOldest}\nDataChangeFilter = {self.uaclient.dataChangeFilter}"
+        if not self.uaclient.dataChangeFilter:
+            return tooltip
+        datachange_trigger = ua.DataChangeTrigger(self.uaclient.dataChangeTrigger).name
+        deadband_type = ua.DeadbandType(self.uaclient.deadbandType).name
+        if deadband_type == "None_":
+            deadband_type = "None"
+        filter_info = f"\nDataChangeTrigger = {datachange_trigger}\nDeadBandType = {deadband_type}\nDeadBandValue = {self.uaclient.deadbandValue}"
+        return tooltip + filter_info
+
+    def remove_sub_tab(self, index):
+        self.datachange_uis[index].delete_subscription(index)
+        del self.datachange_uis[index]
+        self.ui.tabWidget.removeTab(index)
+        del self.subTabs[index]
+
+    """
     def show_cards(self):
         for idx, (nodeid, object_type) in enumerate(self.uaclient.custom_objects.items()):
             cardWidget = QWidget()
@@ -239,6 +290,7 @@ class Window(QMainWindow):
             button.setObjectName(action)
             button.setIcon(QIcon("icons/update.svg"))
             button.setToolTip("Stop update")
+    """
 
     @trycatchslot
     def show_options_dialog(self):
@@ -278,6 +330,7 @@ class Window(QMainWindow):
         if node:
             self.attrs_ui.show_attrs(node)
 
+    """
     def select_card(self, selection):
         if isinstance(selection, QItemSelection):
             if not selection.indexes():  # no selection
@@ -294,6 +347,7 @@ class Window(QMainWindow):
                         blocker = QSignalBlocker(self.ui.scadaWidget)
                         self.ui.scadaWidget.setCurrentRow(i)
                         break
+    """
 
     def show_error(self, msg):
         logger.warning("showing error: %s")
@@ -320,19 +374,19 @@ class Window(QMainWindow):
         self.uaclient.load_security_settings(uri)
         # Subscription settings
         self.uaclient.load_subscription_settings(uri)
-        self.configure_subscription()
+        #self.configure_subscription()
         self.uaclient.save_subscription_settings(uri)
         # Monitored items settings
         self.uaclient.load_monitored_items_settings(uri)
-        self.configure_monitored_items()
+        #self.configure_monitored_items()
         self.uaclient.save_monitored_items_settings(uri)
         try:
             # Connect
             self.uaclient.connect(uri)
             # Show widgets
             self._update_address_list(uri)
-            self.uaclient.find_custom_objects()
-            self.show_cards()
+            self.uaclient.load_custom_objects()
+            #self.show_cards()
             self.tree_ui.set_root_node(self.uaclient.client.get_root_node())
             self.ui.treeView.setFocus()
             self.load_current_node()
@@ -340,20 +394,12 @@ class Window(QMainWindow):
             self.ui.connectButton.setEnabled(True)
             self.ui.optionsButton.setEnabled(False)
             self.ui.addrComboBox.setEnabled(False)
+            self.ui.tabWidget.setTabEnabled(0, True)
         except Exception as ex:
             self.ui.connectButton.setText("Connect")
             self.ui.connectButton.setEnabled(True)
             self.show_error(ex)
             raise
-
-    def configure_subscription(self):
-        # Init Dialog with current settings
-        dia = SubOptionsDialog(self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount,
-                               self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish)
-        ret = dia.exec_()
-        if ret:
-            self.uaclient.requestedPublishingInterval, self.uaclient.requestedMaxKeepAliveCount, \
-            self.uaclient.requestedLifetimeCount, self.uaclient.maxNotificationsPerPublish = dia.get_selected_options()
 
     def configure_monitored_items(self):
         # Init Dialog with current settings
@@ -365,6 +411,33 @@ class Window(QMainWindow):
             self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest, \
             self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger, self.uaclient.deadbandType, \
             self.uaclient.deadbandValue = dia.get_selected_options()
+
+    def get_current_tab_index(self):
+        return self.ui.tabWidget.currentIndex()
+
+    def add_monitored_item(self, node=None):
+        if not isinstance(node, Node):
+            node = self.get_current_node()
+            if node is None:
+                return
+        index = self.get_current_tab_index()
+        if node in self.datachange_uis[index].subscribed_nodes:
+            logger.warning("already subscribed to node: %s ", node)
+            return
+        # Init Dialog with current settings
+        dia = MiOptionsDialog(self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest,
+                              self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger,
+                              self.uaclient.deadbandType, self.uaclient.deadbandValue)
+        ret = dia.exec_()
+        if ret:
+            self.uaclient.samplingInterval, self.uaclient.queueSize, self.uaclient.discardOldest, \
+            self.uaclient.dataChangeFilter, self.uaclient.dataChangeTrigger, self.uaclient.deadbandType, \
+            self.uaclient.deadbandValue = dia.get_selected_options()
+            self.datachange_uis[index].add_monitored_item(index, node)
+
+    def delete_monitored_item(self):
+        index = self.get_current_tab_index()
+        self.datachange_uis[index].delete_monitored_item(index)
 
     def _update_address_list(self, uri):
         if uri in self._address_list:
@@ -389,7 +462,7 @@ class Window(QMainWindow):
 
     def disconnect(self):
         try:
-            self.uaclient.delete_subscription()
+            #self.uaclient.delete_subscription()
             self.uaclient.disconnect()
         except Exception as ex:
             self.show_error(ex)
@@ -399,11 +472,12 @@ class Window(QMainWindow):
             self.tree_ui.clear()
             self.attrs_ui.clear()
             self.refs_ui.clear()
-            self.datachange_ui.clear()
-            self.ui.scadaWidget.clear()
+            #self.datachange_ui.clear()
+            #self.ui.scadaWidget.clear()
             self.ui.connectButton.setText("Connect")
             self.ui.optionsButton.setEnabled(True)
             self.ui.addrComboBox.setEnabled(True)
+            self.ui.tabWidget.setTabEnabled(0, False)
 
     def closeEvent(self, event):
         self.tree_ui.save_state()
@@ -460,12 +534,14 @@ class Window(QMainWindow):
         # Method action
         self.ui.actionCall.setEnabled(node.get_node_class() == ua.NodeClass.Method)
         # DataChange actions
-        if node.get_node_class() != ua.NodeClass.Variable or node.get_parent().nodeid in self.uaclient.custom_objects:
-            self.ui.actionSubscribeDataChange.setEnabled(False)
-            self.ui.actionUnsubscribeDataChange.setEnabled(False)
+        if node.get_node_class() != ua.NodeClass.Variable or self.ui.tabWidget.count() == 1:
+            self.ui.actionAddMonitoredItem.setEnabled(False)
+            self.ui.actionRemoveMonitoredItem.setEnabled(False)
         else:
-            self.ui.actionSubscribeDataChange.setEnabled(node not in self.datachange_ui.subscribed_nodes)
-            self.ui.actionUnsubscribeDataChange.setEnabled(not self.ui.actionSubscribeDataChange.isEnabled())
+            index = self.ui.tabWidget.currentIndex()
+            datachange_ui = self.datachange_uis[index]
+            self.ui.actionAddMonitoredItem.setEnabled(node not in datachange_ui.subscribed_nodes)
+            self.ui.actionRemoveMonitoredItem.setEnabled(not self.ui.actionAddMonitoredItem.isEnabled())
 
     def call_method(self):
         node = self.get_current_node()
