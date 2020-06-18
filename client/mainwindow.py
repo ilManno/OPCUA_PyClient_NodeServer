@@ -17,7 +17,7 @@ from utils import trycatchslot
 
 from dialogs.connect_settings import ConnectSettingsDialog
 from dialogs.sub_settings import SubSettingsDialog
-from dialogs.mi_options import MiSettingsDialog
+from dialogs.mi_settings import MiSettingsDialog
 from mainwindow_ui import Ui_MainWindow
 from opc_ua_client import OpcUaClient
 
