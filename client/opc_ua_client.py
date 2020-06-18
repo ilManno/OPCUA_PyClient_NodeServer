@@ -9,20 +9,20 @@ from opcua.tools import endpoint_to_strings
 logger = logging.getLogger("__main__")
 
 
-class UaClient:
+class OpcUaClient:
 
     def __init__(self):
         self.settings = QSettings()
         self.client = None
         self._connected = False
-        # Subscription
+        # Subscriptions
         self._datachange_subs = []  # list of tuples with subscription and dict with nodeids as keys and handles as values
         self.publishingEnabled = True  # Not necessary
         self.requestedPublishingInterval = 500
         self.requestedMaxKeepAliveCount = 3000
         self.requestedLifetimeCount = 10000
         self.maxNotificationsPerPublish = 10000
-        self.priority = 0  # Not necessary
+        self.priority = 0
         # Monitored items
         self._client_handle = 0
         self.samplingInterval = 250
@@ -131,7 +131,8 @@ class UaClient:
                         mfilter.DeadbandType = self.deadbandType
                         mfilter.DeadbandValue = self.deadbandValue  # absolute float value or from 0 to 100 for percentage deadband
                     else:
-                        mfilter.DeadbandType = ua.DeadbandType.None_
+                        self.deadbandType = ua.DeadbandType.None_
+                        mfilter.DeadbandType = self.deadbandType
                 elif self.deadbandType == ua.DeadbandType.Percent:
                     has_EURange = False
                     if node.get_type_definition().Identifier == ua.object_ids.ObjectIds.AnalogItemType:
@@ -144,7 +145,8 @@ class UaClient:
                         mfilter.DeadbandType = self.deadbandType
                         mfilter.DeadbandValue = self.deadbandValue  # absolute float value or from 0 to 100 for percentage deadband
                     else:
-                        mfilter.DeadbandType = ua.DeadbandType.None_
+                        self.deadbandType = ua.DeadbandType.None_
+                        mfilter.DeadbandType = self.deadbandType
             else:
                 mfilter = None
             mparams.Filter = mfilter
@@ -243,16 +245,18 @@ class UaClient:
     def load_subscription_settings(self, uri):
         mysettings = self.settings.value("subscription_settings", None)
         if mysettings is not None and uri in mysettings:
-            pub_interval, max_keepalive_count, lifetime_count, max_notifications = mysettings[uri]
+            pub_interval, max_keepalive_count, lifetime_count, max_notifications, priority = mysettings[uri]
             self.requestedPublishingInterval = pub_interval
             self.requestedMaxKeepAliveCount = max_keepalive_count
             self.requestedLifetimeCount = lifetime_count
             self.maxNotificationsPerPublish = max_notifications
+            self.priority = priority
         else:
             self.requestedPublishingInterval = 500
             self.requestedMaxKeepAliveCount = 3000
             self.requestedLifetimeCount = 10000
             self.maxNotificationsPerPublish = 10000
+            self.priority = 0
 
     def save_subscription_settings(self, uri):
         mysettings = self.settings.value("subscription_settings", None)
@@ -261,7 +265,8 @@ class UaClient:
         mysettings[uri] = [self.requestedPublishingInterval,
                            self.requestedMaxKeepAliveCount,
                            self.requestedLifetimeCount,
-                           self.maxNotificationsPerPublish]
+                           self.maxNotificationsPerPublish,
+                           self.priority]
         self.settings.setValue("subscription_settings", mysettings)
 
     def load_monitored_items_settings(self, uri):

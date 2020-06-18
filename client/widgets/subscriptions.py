@@ -48,9 +48,9 @@ class DataChangeHandler(QObject):
 
 class DataChangeUI(object):
 
-    def __init__(self, window, uaclient, view):
+    def __init__(self, window, opc_ua_client, view):
         self.window = window
-        self.uaclient = uaclient
+        self.opc_ua_client = opc_ua_client
         self._subhandler = DataChangeHandler()
         self.subscribed_nodes = []
 
@@ -58,7 +58,6 @@ class DataChangeUI(object):
         self.model = QStandardItemModel()
         self.model.setHorizontalHeaderLabels(["ObjectName", "VariableName", "Value", "Timestamp"])
         self.view.setModel(self.model)
-        self.view.setColumnWidth(1, 150)
 
         # handle subscriptions
         self._subhandler.data_change_fired.connect(self._update_subscription_model, type=Qt.QueuedConnection)
@@ -90,13 +89,13 @@ class DataChangeUI(object):
         self.window.tree_ui.expand_to_node(node)
 
     def canDropMimeData(self, mdata, action, row, column, parent):
-        node = self.uaclient.client.get_node(mdata.text())
+        node = self.opc_ua_client.client.get_node(mdata.text())
         if node.get_node_class() == ua.NodeClass.Variable:
             return True
         return False
 
     def dropMimeData(self, mdata, action, row, column, parent):
-        node = self.uaclient.client.get_node(mdata.text())
+        node = self.opc_ua_client.client.get_node(mdata.text())
         self.window.add_monitored_item(node)
         return True
 
@@ -125,10 +124,10 @@ class DataChangeUI(object):
         self.window.show_error(*args)
 
     def create_subscription(self):
-        self.uaclient.create_subscription(self._subhandler)
+        self.opc_ua_client.create_subscription(self._subhandler)
 
     def delete_subscription(self, index):
-        self.uaclient.delete_subscription(index)
+        self.opc_ua_client.delete_subscription(index)
 
     @trycatchslot
     def add_monitored_item(self, index, node):
@@ -139,18 +138,18 @@ class DataChangeUI(object):
             parent_node = parent_node.get_parent()
             descriptions = parent_node.get_references(ua.ObjectIds.Aggregates, ua.BrowseDirection.Inverse, ua.NodeClass.Object, True)
         parent_nodeid = descriptions[0].NodeId
-        if parent_nodeid in self.uaclient.custom_objects:
-            custom_type = self.uaclient.custom_objects[parent_nodeid]
+        if parent_nodeid in self.opc_ua_client.custom_objects:
+            custom_type = self.opc_ua_client.custom_objects[parent_nodeid]
             icon = get_icon(custom_type)
         else:
             icon = "icons/object.svg"
         row = [QStandardItem(QIcon(icon), descriptions[0].DisplayName.Text), QStandardItem(variable_name), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
-        row[0].setData(self.window.get_monitored_item_tooltip(), Qt.ToolTipRole)
         self.model.appendRow(row)
         self.subscribed_nodes.append(node)
         try:
-            self.uaclient.create_monitored_items(node, index)
+            self.opc_ua_client.create_monitored_items(node, index)
+            row[0].setData(self.window.get_monitored_item_tooltip(), Qt.ToolTipRole)
             self.model.sort(0, Qt.AscendingOrder)
             self._color_rows()
         except Exception as ex:
@@ -183,7 +182,7 @@ class DataChangeUI(object):
             node = self.window.get_current_node()
         if node is None:
             return
-        self.uaclient.remove_monitored_item(node, index)
+        self.opc_ua_client.remove_monitored_item(node, index)
         self.subscribed_nodes.remove(node)
         i = 0
         while self.model.item(i):

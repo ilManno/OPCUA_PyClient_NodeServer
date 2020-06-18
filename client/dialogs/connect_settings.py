@@ -5,14 +5,14 @@ from PyQt5.QtCore import Qt, QItemSelection, QSignalBlocker
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox
 
-from dialogs.connect_options_ui import Ui_ConnectOptionsDialog
+from dialogs.connect_settings_ui import Ui_ConnectSettingsDialog
 from utils import trycatchslot
 
 
-class ConnectOptionsDialog(QDialog):
+class ConnectSettingsDialog(QDialog):
     def __init__(self, endpoints, security_mode, security_policy, certificate_path, private_key_path):
         super().__init__()
-        self.ui = Ui_ConnectOptionsDialog()
+        self.ui = Ui_ConnectSettingsDialog()
         self.ui.setupUi(self)
 
         self.endpoints_model = QStandardItemModel()
@@ -97,9 +97,10 @@ class ConnectOptionsDialog(QDialog):
     def _select_endpoint(self, policy):
         if policy:
             mode = self.ui.modeComboBox.currentText()
-            idxlist = self.endpoints_model.match(self.endpoints_model.index(0, 2), Qt.DisplayRole, policy, -1, Qt.MatchExactly)
+            # Get indices of supported endpoints
+            idxlist = self.endpoints_model.match(self.endpoints_model.index(0, 3), Qt.DisplayRole, "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary", -1, Qt.MatchExactly)
             for idx in idxlist:
-                if self.endpoints_model.data(idx.siblingAtColumn(1)) == mode and idx.row() != self.ui.endpointsView.currentIndex().row():
+                if self.endpoints_model.data(idx.siblingAtColumn(1)) == mode and self.endpoints_model.data(idx.siblingAtColumn(2)) == policy and idx.row() != self.ui.endpointsView.currentIndex().row():
                     self.ui.endpointsView.setCurrentIndex(idx)
 
     def select_security(self, selection):

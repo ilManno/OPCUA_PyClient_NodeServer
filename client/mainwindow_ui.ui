@@ -51,7 +51,7 @@
          <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>8</number>
+         <number>7</number>
         </property>
         <item row="0" column="0">
          <widget class="QTabWidget" name="tabWidget">
@@ -83,7 +83,7 @@
              <number>0</number>
             </property>
             <item row="0" column="0">
-             <widget class="QLabel" name="label">
+             <widget class="QLabel" name="noSubLabel">
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -230,9 +230,9 @@
     </property>
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="4">
-      <widget class="QPushButton" name="optionsButton">
+      <widget class="QPushButton" name="settingsButton">
        <property name="text">
-        <string>Options...</string>
+        <string>Settings...</string>
        </property>
       </widget>
      </item>
@@ -356,12 +356,12 @@
     <string>Add selected node to monitored items for current subscription</string>
    </property>
   </action>
-  <action name="actionRemoveMonitoredItem">
+  <action name="actionDeleteMonitoredItem">
    <property name="text">
-    <string>Remove Monitored Item from Subscription</string>
+    <string>Delete Monitored Item from Subscription</string>
    </property>
    <property name="toolTip">
-    <string>Remove selected node from monitored items for current subscription</string>
+    <string>Delete selected node from monitored items for current subscription</string>
    </property>
   </action>
   <action name="actionCopyPath">
