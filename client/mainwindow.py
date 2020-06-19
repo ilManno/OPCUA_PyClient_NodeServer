@@ -168,6 +168,8 @@ class Window(QMainWindow):
         del self.datachange_uis[index]
         self.ui.tabWidget.removeTab(index)
         del self.subTabs[index]
+        if index == self.ui.tabWidget.count() - 1:
+            self.ui.tabWidget.setCurrentIndex(index - 1)
 
     @trycatchslot
     def show_connect_settings_dialog(self):
