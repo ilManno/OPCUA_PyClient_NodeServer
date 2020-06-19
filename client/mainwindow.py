@@ -145,8 +145,9 @@ class Window(QMainWindow):
                 self.previous_index = self.get_current_tab_index()
 
     def restore_index(self, index):
-        if index == self.ui.tabWidget.count() - 1:
+        if index == self.ui.tabWidget.count() - 1 and self.previous_index != -1:
             self.ui.tabWidget.setCurrentIndex(self.previous_index)
+            self.previous_index = -1
 
     def get_sub_tooltip(self):
         return f"PublishingInterval = {self.opc_ua_client.requestedPublishingInterval}\nKeepAliveCount = {self.opc_ua_client.requestedMaxKeepAliveCount}\nLifetimeCount = {self.opc_ua_client.requestedLifetimeCount}\nMaxNotificationsPerPublish = {self.opc_ua_client.maxNotificationsPerPublish}\nPriority = {self.opc_ua_client.priority}"
