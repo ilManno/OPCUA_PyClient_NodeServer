@@ -168,6 +168,17 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>samplingInterval</tabstop>
+  <tabstop>queueSize</tabstop>
+  <tabstop>discardOldest</tabstop>
+  <tabstop>dataChangeFilter</tabstop>
+  <tabstop>dataChangeTrigger</tabstop>
+  <tabstop>deadbandType</tabstop>
+  <tabstop>deadbandValue</tabstop>
+  <tabstop>addButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

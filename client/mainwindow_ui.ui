@@ -398,6 +398,17 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>addrComboBox</tabstop>
+  <tabstop>connectButton</tabstop>
+  <tabstop>settingsButton</tabstop>
+  <tabstop>treeView</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>attrView</tabstop>
+  <tabstop>attrRefreshButton</tabstop>
+  <tabstop>refView</tabstop>
+  <tabstop>logTextEdit</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

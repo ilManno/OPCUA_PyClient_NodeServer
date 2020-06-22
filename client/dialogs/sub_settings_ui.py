@@ -75,6 +75,12 @@ class Ui_SubSettingsDialog(object):
 
         self.retranslateUi(SubSettingsDialog)
         QtCore.QMetaObject.connectSlotsByName(SubSettingsDialog)
+        SubSettingsDialog.setTabOrder(self.requestedPublishInterval, self.requestedMaxKeepAliveCount)
+        SubSettingsDialog.setTabOrder(self.requestedMaxKeepAliveCount, self.requestedLifeTimeCount)
+        SubSettingsDialog.setTabOrder(self.requestedLifeTimeCount, self.maxNotificationsPerPublish)
+        SubSettingsDialog.setTabOrder(self.maxNotificationsPerPublish, self.priority)
+        SubSettingsDialog.setTabOrder(self.priority, self.createButton)
+        SubSettingsDialog.setTabOrder(self.createButton, self.cancelButton)
 
     def retranslateUi(self, SubSettingsDialog):
         _translate = QtCore.QCoreApplication.translate

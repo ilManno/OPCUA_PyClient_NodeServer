@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1312</width>
-    <height>387</height>
+    <height>363</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -179,6 +179,16 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>endpointsView</tabstop>
+  <tabstop>modeComboBox</tabstop>
+  <tabstop>policyComboBox</tabstop>
+  <tabstop>certificateButton</tabstop>
+  <tabstop>privateKeyButton</tabstop>
+  <tabstop>generateButton</tabstop>
+  <tabstop>connectButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

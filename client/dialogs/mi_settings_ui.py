@@ -95,6 +95,14 @@ class Ui_MiSettingsDialog(object):
 
         self.retranslateUi(MiSettingsDialog)
         QtCore.QMetaObject.connectSlotsByName(MiSettingsDialog)
+        MiSettingsDialog.setTabOrder(self.samplingInterval, self.queueSize)
+        MiSettingsDialog.setTabOrder(self.queueSize, self.discardOldest)
+        MiSettingsDialog.setTabOrder(self.discardOldest, self.dataChangeFilter)
+        MiSettingsDialog.setTabOrder(self.dataChangeFilter, self.dataChangeTrigger)
+        MiSettingsDialog.setTabOrder(self.dataChangeTrigger, self.deadbandType)
+        MiSettingsDialog.setTabOrder(self.deadbandType, self.deadbandValue)
+        MiSettingsDialog.setTabOrder(self.deadbandValue, self.addButton)
+        MiSettingsDialog.setTabOrder(self.addButton, self.cancelButton)
 
     def retranslateUi(self, MiSettingsDialog):
         _translate = QtCore.QCoreApplication.translate

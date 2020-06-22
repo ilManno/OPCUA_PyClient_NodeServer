@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_ConnectSettingsDialog(object):
     def setupUi(self, ConnectSettingsDialog):
         ConnectSettingsDialog.setObjectName("ConnectSettingsDialog")
-        ConnectSettingsDialog.resize(1312, 387)
+        ConnectSettingsDialog.resize(1312, 363)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("icons/property.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         ConnectSettingsDialog.setWindowIcon(icon)
@@ -81,6 +81,13 @@ class Ui_ConnectSettingsDialog(object):
 
         self.retranslateUi(ConnectSettingsDialog)
         QtCore.QMetaObject.connectSlotsByName(ConnectSettingsDialog)
+        ConnectSettingsDialog.setTabOrder(self.endpointsView, self.modeComboBox)
+        ConnectSettingsDialog.setTabOrder(self.modeComboBox, self.policyComboBox)
+        ConnectSettingsDialog.setTabOrder(self.policyComboBox, self.certificateButton)
+        ConnectSettingsDialog.setTabOrder(self.certificateButton, self.privateKeyButton)
+        ConnectSettingsDialog.setTabOrder(self.privateKeyButton, self.generateButton)
+        ConnectSettingsDialog.setTabOrder(self.generateButton, self.connectButton)
+        ConnectSettingsDialog.setTabOrder(self.connectButton, self.cancelButton)
 
     def retranslateUi(self, ConnectSettingsDialog):
         _translate = QtCore.QCoreApplication.translate

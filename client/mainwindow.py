@@ -189,6 +189,7 @@ class Window(QMainWindow):
                 self.opc_ua_client.save_security_settings(uri)
                 self.connect()
         except Exception as ex:
+            self.ui.addrComboBox.setFocus()
             self.show_error(ex)
             raise
 
@@ -251,6 +252,7 @@ class Window(QMainWindow):
         except Exception as ex:
             self.ui.connectButton.setText("Connect")
             self.ui.connectButton.setEnabled(True)
+            self.ui.addrComboBox.setFocus()
             self.show_error(ex)
             raise
 
@@ -328,6 +330,7 @@ class Window(QMainWindow):
             self.ui.addrComboBox.setEnabled(True)
             self.ui.noSubLabel.hide()
             self.ui.tabWidget.setTabEnabled(0, False)
+            self.ui.addrComboBox.setFocus()
 
     def closeEvent(self, event):
         self.tree_ui.save_state()

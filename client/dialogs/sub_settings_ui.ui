@@ -145,6 +145,15 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>requestedPublishInterval</tabstop>
+  <tabstop>requestedMaxKeepAliveCount</tabstop>
+  <tabstop>requestedLifeTimeCount</tabstop>
+  <tabstop>maxNotificationsPerPublish</tabstop>
+  <tabstop>priority</tabstop>
+  <tabstop>createButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
