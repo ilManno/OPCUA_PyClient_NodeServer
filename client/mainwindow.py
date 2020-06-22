@@ -120,6 +120,11 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
+    def createPopupMenu(self):
+        self.ui.popup = QMenu()
+        self.ui.popup.addActions(self.ui.menuView.actions())
+        return self.ui.popup
+
     def add_sub_tab(self, index):
         if self.ui.tabWidget.isTabEnabled(index) and index == self.ui.tabWidget.count() - 1:
             uri = self.ui.addrComboBox.currentText()
