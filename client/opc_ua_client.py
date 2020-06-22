@@ -19,13 +19,14 @@ class OpcUaClient:
         self._datachange_subs = []  # list of tuples with subscription and dict with nodeids as keys and handles as values
         self.publishingEnabled = True  # Not necessary
         self.requestedPublishingInterval = 500
+        self.publishingIntervals = []
         self.requestedMaxKeepAliveCount = 3000
         self.requestedLifetimeCount = 10000
         self.maxNotificationsPerPublish = 10000
         self.priority = 0
         # Monitored items
         self._client_handle = 0
-        self.samplingInterval = 250
+        self.samplingInterval = self.requestedPublishingInterval
         self.queueSize = 0
         self.discardOldest = True
         self.dataChangeFilter = False
@@ -105,6 +106,7 @@ class OpcUaClient:
         params.Priority = self.priority
         datachange_sub = self.client.create_subscription(params, handler)
         self._datachange_subs.append((datachange_sub, {}))
+        self.publishingIntervals.append(self.requestedPublishingInterval)
 
     def create_monitored_items(self, nodes, index):
         monitored_items = []
@@ -180,6 +182,7 @@ class OpcUaClient:
         # Delete subscription on server
         sub.delete()
         del self._datachange_subs[index]
+        del self.publishingIntervals[index]
 
     def delete_subscriptions(self):
         for sub, monitored_items_handles in self._datachange_subs:

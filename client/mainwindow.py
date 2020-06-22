@@ -268,10 +268,12 @@ class Window(QMainWindow):
             return
         uri = self.ui.addrComboBox.currentText()
         self.opc_ua_client.load_monitored_items_settings(uri)
+        idx = self.ui.tabWidget.currentIndex()
         # Init Dialog with current settings
-        dia = MiSettingsDialog(self.opc_ua_client.samplingInterval, self.opc_ua_client.queueSize, self.opc_ua_client.discardOldest,
-                               self.opc_ua_client.dataChangeFilter, self.opc_ua_client.dataChangeTrigger,
-                               self.opc_ua_client.deadbandType, self.opc_ua_client.deadbandValue)
+        dia = MiSettingsDialog(self.opc_ua_client.publishingIntervals[idx], self.opc_ua_client.queueSize,
+                               self.opc_ua_client.discardOldest, self.opc_ua_client.dataChangeFilter,
+                               self.opc_ua_client.dataChangeTrigger, self.opc_ua_client.deadbandType,
+                               self.opc_ua_client.deadbandValue)
         ret = dia.exec_()
         if ret:
             self.opc_ua_client.samplingInterval, self.opc_ua_client.queueSize, self.opc_ua_client.discardOldest, \
